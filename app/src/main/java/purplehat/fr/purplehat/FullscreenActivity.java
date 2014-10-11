@@ -142,6 +142,8 @@ public class FullscreenActivity extends Activity {
         // testReadBroadcastedPackets();
         // testDiscoveryAskConnexion();
         // testDiscoveryWaitConnexion();
+
+        new Thread(new ConnexionListener()).start();
     }
 
     public void testDiscoveryWaitConnexion() {
@@ -281,7 +283,7 @@ public class FullscreenActivity extends Activity {
         mDrawerView.addDrawer(new DrawingView.Drawer() {
             @Override
             public void draw(Canvas canvas) {
-                canvas.drawText("TIME : "+ s.getRelativeTime(), 100, 100, new Paint(Color.RED));
+                canvas.drawText("TIME : " + s.getRelativeTime(), 100, 100, new Paint(Color.RED));
             }
         });
     }

@@ -18,6 +18,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+import purplehat.fr.purplehat.screen.ScreenUtilitiesService;
+
 /**
  * Created by jmcomets on 11/10/14.
  */
@@ -25,10 +27,20 @@ public class Master {
     private static final String LOG_TAG = "MASTER_CLIENT";
 
     private PhysicalScreen baseScreen;
+
+    public PhysicalScreen getScreen(String id) {
+        return screenMap.get(id);
+    }
+
     private Map<String, PhysicalScreen> screenMap;
     private WebSocketServer server;
 
     public Master(int port, String screenId, PhysicalScreen baseScreen) {
+        if (baseScreen == null) {
+            baseScreen = new PhysicalScreen(0, 0, 0, 0);
+            baseScreen.setX2(ScreenUtilitiesService.getDisplayCenter().x * 2);
+            baseScreen.setY2(ScreenUtilitiesService.getDisplayCenter().y * 2);
+        }
         this.baseScreen = baseScreen;
         screenMap = new HashMap<String, PhysicalScreen>();
         screenMap.put(screenId, baseScreen);
