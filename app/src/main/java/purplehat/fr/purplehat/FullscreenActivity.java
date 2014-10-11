@@ -164,9 +164,13 @@ public class FullscreenActivity extends Activity {
         // testDiscoveryWaitConnexion();
 
         new Thread(new ConnexionListener()).start();
+
+        // onExitingSwipeEvent(42, 42);
+        onEntrantSwipeEvent(42, 42);
     }
 
     public void becomeASlave(byte[] masterAddress) {
+        Log.d("TG", "become slave biatch");
         slave = new Slave();
         slave.addListener("views changes", new Slave.Listener() {
             @Override
@@ -180,27 +184,52 @@ public class FullscreenActivity extends Activity {
 
 
     public void becomeAMaster() {
+        Log.d("TG", "become master biatch");
         master = new Master(MasterProxy.MASTER_PROXY_PORT_DE_OUF, "4242424242424242424242", null);
+        master.start();
     }
 
-    public void onExitingSwipeEvent(int swipeX, int swipeY) {
-        if (slave != null) {
-            try {
-                discoveryService.waitConnexion(InetAddress.getByAddress(slave.getMasterAddress()), swipeX, swipeY);
-            } catch (IOException e) {
-                e.printStackTrace();
+    public void onExitingSwipeEvent(final int swipeX, final int swipeY) {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                InetAddress masterAddress = null;
+                if (master != null) {
+                    try {
+                        masterAddress = discoveryService.getLocalIp();
+                    } catch (UnknownHostException e) {
+                        e.printStackTrace();
+                    }
+                }
+                if (slave != null) {
+                    try {
+                        masterAddress = InetAddress.getByAddress(slave.getMasterAddress());
+                    } catch (UnknownHostException e) {
+                        e.printStackTrace();
+                    }
+                }
+                try {
+                    discoveryService.waitConnexion(masterAddress, swipeX, swipeY);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
-        }
+        }).start();
     }
 
-    public void onEntrantSwipeEvent(int swipeX, int swipeY) {
-        if (slave == null && master == null) {
-            try {
-                discoveryService.askConnexion(swipeX, swipeY);
-            } catch (IOException e) {
-                e.printStackTrace();
+    public void onEntrantSwipeEvent(final int swipeX, final int swipeY) {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                if (slave == null && master == null) {
+                    try {
+                        discoveryService.askConnexion(swipeX, swipeY);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
             }
-        }
+        }).start();
     }
 
     public void testDiscoveryWaitConnexion() {

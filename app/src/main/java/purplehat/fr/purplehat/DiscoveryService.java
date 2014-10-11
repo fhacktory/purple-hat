@@ -61,7 +61,7 @@ public class DiscoveryService {
         FullscreenActivity.getInstance().becomeAMaster();
     }
 
-    private InetAddress getLocalIp() throws UnknownHostException {
+    public InetAddress getLocalIp() throws UnknownHostException {
         WifiManager wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
         int ip = wifiManager.getConnectionInfo().getIpAddress();
         return InetAddress.getByAddress(new byte[]{

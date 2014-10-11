@@ -36,6 +36,10 @@ public class Master {
     private Map<String, PhysicalScreen> screenMap;
     private WebSocketServer server;
 
+    public void start() {
+        this.server.start();
+    }
+
     public Master(int port, String screenId, PhysicalScreen baseScreen) {
         if (baseScreen == null) {
             baseScreen = new PhysicalScreen(0, 0, 0, 0);
