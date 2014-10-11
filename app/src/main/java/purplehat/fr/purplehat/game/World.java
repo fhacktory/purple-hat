@@ -8,8 +8,23 @@ import java.util.Collection;
  */
 public class World {
     private Collection<Ball> balls;
+    private Collection<Rect2<Integer>> rects;
 
     public World() {
         balls = new ArrayList<Ball>();
+        rects = new ArrayList<Rect2<Integer>>();
+
+        Ball ball = new Ball();
+        ball.setPosition(new Vector2<Integer>(10, 20));
+        ball.setRadius(30);
+        balls.add(ball);
+    }
+
+    public Collection<Ball> getBalls() {
+        return balls;
+    }
+
+    public Collection<Rect2<Integer>> getRects() {
+        return rects;
     }
 }

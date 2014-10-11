@@ -19,7 +19,7 @@ import java.util.Map;
 public class Slave {
 
     public interface Listener {
-        public void emit(JSONObject data);
+        public void notify(JSONObject data);
     }
 
     private static final String LOG_TAG = "MASTER_CLIENT";
@@ -31,14 +31,14 @@ public class Slave {
 
         addListener("views changes", new Listener() {
             @Override
-            public void emit(JSONObject data) {
+            public void notify(JSONObject data) {
                 Log.d(LOG_TAG, "views changed" + data);
             }
         });
 
         addListener("white hit", new Listener() {
             @Override
-            public void emit(JSONObject data) {
+            public void notify(JSONObject data) {
                 Log.d(LOG_TAG, "white hit" + data);
             }
         });
@@ -72,7 +72,7 @@ public class Slave {
                         Collection<Listener> listeners = allListeners.get(obj.getString("action"));
                         if (listeners != null) {
                             for (Listener listener : listeners) {
-                                listener.emit(obj);
+                                listener.notify(obj);
                             }
                         }
                     } catch (JSONException e) {

@@ -1,10 +1,15 @@
 package purplehat.fr.purplehat;
 
+import purplehat.fr.purplehat.game.Ball;
+import purplehat.fr.purplehat.game.World;
 import purplehat.fr.purplehat.util.SystemUiHider;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Context;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Build;
@@ -59,6 +64,9 @@ public class FullscreenActivity extends Activity {
     private Master master = null;
     private Slave slave = null;
 
+    // THE WORLD
+    World world = new World();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -107,7 +115,16 @@ public class FullscreenActivity extends Activity {
 
 
         mDrawerView = (DrawingView) findViewById(R.id.fullscreen_content);
-        mDrawerThread = mDrawerView.getThread();
+        mDrawerView.addDrawer(new DrawingView.Drawer() {
+            @Override
+            public void draw(Canvas canvas) {
+                Paint paint = new Paint();
+                paint.setColor(Color.YELLOW);
+                for (Ball ball : world.getBalls()) {
+                    canvas.drawCircle(ball.getPosition().getX(), ball.getPosition().getY(), ball.getRadius(), paint);
+                }
+            }
+        });
 
         //mDrawerView.setOnTouchListener(new OnBackgroundTouchedListener(mDrawerView));
 
@@ -123,8 +140,7 @@ public class FullscreenActivity extends Activity {
             }
         });
 
-        testTheMasterMagic(true);
-
+        //testTheMasterMagic(true);
     }
 
     // Magic conversion numbers!

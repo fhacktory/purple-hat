@@ -16,4 +16,20 @@ public class Ball {
         this.position = position;
         this.radius = radius;
     }
+
+    public Vector2<Integer> getPosition() {
+        return position;
+    }
+
+    public void setPosition(Vector2<Integer> position) {
+        this.position = position;
+    }
+
+    public int getRadius() {
+        return radius;
+    }
+
+    public void setRadius(int radius) {
+        this.radius = radius;
+    }
 }
