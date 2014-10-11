@@ -161,14 +161,16 @@ public class FullscreenActivity extends Activity {
             master = new Master(port, info.getMacAddress(), buildBasePhysicalScreen());
         } else {
             slave = new Slave();
-            slave.connect(serverHost + ":" + port);
 
             slave.addListener("views changes", new Slave.Listener() {
                 @Override
                 public void notify(JSONObject data) {
                     Log.d("ACTIVITY", "views changed" + data);
+                    world.updateFromJson(data);
                 }
             });
+
+            slave.connect(serverHost + ":" + port);
         }
     }
 
