@@ -33,6 +33,8 @@ public class DrawingView extends SurfaceView implements SurfaceHolder.Callback {
         PointF touchLocation = new PointF(0f, 0f);
         float lineWidth;
 
+
+
         boolean mRun = false;
 
         /**
@@ -80,7 +82,7 @@ public class DrawingView extends SurfaceView implements SurfaceHolder.Callback {
 
         }
 
-        void doVerticalMove(float x, float width) {
+        void doVerticalMove(float x, float width, Direction direction) {
             verticalMovement = true;
             lineWidth = width;
             touchLocation.x = x;
@@ -162,17 +164,17 @@ public class DrawingView extends SurfaceView implements SurfaceHolder.Callback {
     /** The thread that actually draws the animation */
     private DrawerThread thread;
 
-
     private static final int MIN_TOUCH_DISTANCE_DIRECTION = 100;
     private static final int LINE_WIDTH = 80;
 
-    private static enum Direction {
-        HORIZONTAL,
-        VERTICAL
+    public enum Direction {
+        UP_DOWN,
+        DOWN_UP,
+        LEFT_RIGHT,
+        RIGHT_LEFT
     }
 
     PointF origin;
-    Direction direction;
 
     public DrawingView(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -228,12 +230,10 @@ public class DrawingView extends SurfaceView implements SurfaceHolder.Callback {
 
         // Detect movement direction
         if (dist_x > MIN_TOUCH_DISTANCE_DIRECTION && dist_y < MIN_TOUCH_DISTANCE_DIRECTION) {
-            direction = Direction.HORIZONTAL;
             thread.doHorizontalMove(y, LINE_WIDTH);
             return true;
         } else if (dist_y > MIN_TOUCH_DISTANCE_DIRECTION && dist_x < MIN_TOUCH_DISTANCE_DIRECTION) {
-            direction = Direction.VERTICAL;
-            thread.doVerticalMove(x, LINE_WIDTH);
+            thread.doVerticalMove(x, LINE_WIDTH, Direction.DOWN_UP);
             return true;
         }
         return false;
