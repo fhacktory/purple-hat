@@ -18,6 +18,7 @@ import java.io.IOException;
 
 import purplehat.fr.purplehat.game.Ball;
 import purplehat.fr.purplehat.game.World;
+import purplehat.fr.purplehat.gesturelistener.OnBackgroundTouchedListener;
 import purplehat.fr.purplehat.util.SystemUiHider;
 import purplehat.fr.purplehat.view.DrawingView;
 import java.net.InetAddress;
@@ -130,19 +131,7 @@ public class FullscreenActivity extends Activity {
             }
         });
 
-        //mDrawerView.setOnTouchListener(new OnBackgroundTouchedListener(mDrawerView));
-
-//        // Set up the user interaction to manually show or hide the system UI.
-//        contentView.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//                if (TOGGLE_ON_CLICK) {
-//                    mSystemUiHider.toggle();
-//                } else {
-//                    mSystemUiHider.hide();
-//                }
-//            }
-//        });
+        mDrawerView.setOnTouchListener(new OnBackgroundTouchedListener());
 
         //testTheMasterMagic(true);
 
