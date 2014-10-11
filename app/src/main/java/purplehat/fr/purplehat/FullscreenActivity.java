@@ -21,9 +21,11 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Random;
 
 import purplehat.fr.purplehat.Geometrics.PolygonUtill;
+import purplehat.fr.purplehat.game.Rect2;
 import purplehat.fr.purplehat.game.World;
 import purplehat.fr.purplehat.gesturelistener.OnBackgroundTouchedListener;
 import purplehat.fr.purplehat.screen.ScreenUtilitiesService;
@@ -156,10 +158,20 @@ public class FullscreenActivity extends Activity {
 //            }
 //        });
 
-        mDrawerView.setOnTouchListener(new OnBackgroundTouchedListener());
+        mDrawerView.setOnTouchListener(new OnBackgroundTouchedListener(new OnBackgroundTouchedListener.InOrOutListener() {
+            @Override
+            public void onIn(int x, int y) {
+                onEntrantSwipeEvent(x, y);
+            }
 
-        testTimer();
-        testRect();
+            @Override
+            public void onOut(int x, int y) {
+                onExitingSwipeEvent(x, y);
+            }
+        }));
+
+        //testTimer();
+        //testRect();
 
         //testTheMasterMagic(true);
 
@@ -168,7 +180,6 @@ public class FullscreenActivity extends Activity {
         // testDiscoveryWaitConnexion();
 
         new Thread(new ConnexionListener()).start();
-
     }
 
     @Override
@@ -176,7 +187,7 @@ public class FullscreenActivity extends Activity {
         super.onPostCreate(savedInstanceState);
 
         //onExitingSwipeEvent(42, 42);
-        onEntrantSwipeEvent(42, 42);
+        //onEntrantSwipeEvent(42, 42);
     }
 
     public void becomeASlave(byte[] masterAddress) {
@@ -191,7 +202,6 @@ public class FullscreenActivity extends Activity {
         });
         slave.connect(masterAddress, MasterProxy.MASTER_PROXY_PORT_DE_OUF);
     }
-
 
     public void becomeAMaster() {
         Log.d("TG", "become master biatch");
@@ -369,7 +379,7 @@ public class FullscreenActivity extends Activity {
         mDrawerView.addDrawer(new DrawingView.Drawer() {
             @Override
             public void draw(Canvas canvas) {
-                canvas.drawText("TIME : "+ s.getRelativeTime(), 100, 100, new Paint(Color.RED));
+                canvas.drawText("TIME : " + s.getRelativeTime(), 100, 100, new Paint(Color.RED));
             }
         });
     }
@@ -418,7 +428,6 @@ public class FullscreenActivity extends Activity {
             }
         });
     }
-
 
     @Override
     protected void onStop() {
