@@ -14,6 +14,10 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.widget.TextView;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+
 import purplehat.fr.purplehat.screen.ScreenUtilitiesService;
 
 /**
@@ -22,6 +26,12 @@ import purplehat.fr.purplehat.screen.ScreenUtilitiesService;
 public class DrawingView extends SurfaceView implements SurfaceHolder.Callback {
 
     public static final String TAG = "DrawingView";
+
+    public interface Drawer {
+        public void draw(Canvas canvas);
+    }
+
+    private Collection<Drawer> drawers;
 
     public class DrawerThread extends Thread {
         private final SurfaceHolder mSurfaceHolder;
@@ -69,7 +79,6 @@ public class DrawingView extends SurfaceView implements SurfaceHolder.Callback {
             synchronized (mSurfaceHolder) {
                 mCanvasWidth = width;
                 mCanvasHeight = height;
-
             }
         }
 
@@ -151,6 +160,10 @@ public class DrawingView extends SurfaceView implements SurfaceHolder.Callback {
                         paint);
             }
 
+            for (Drawer d : drawers) {
+                d.draw(canvas);
+            }
+
         }
 
     } // THREAD
@@ -192,10 +205,7 @@ public class DrawingView extends SurfaceView implements SurfaceHolder.Callback {
         });
 
         setFocusable(true); // make sure we get key events
-    }
-
-    public DrawerThread getThread() {
-        return thread;
+        drawers = Collections.synchronizedCollection(new ArrayList<Drawer>());
     }
 
     @Override
@@ -270,6 +280,10 @@ public class DrawingView extends SurfaceView implements SurfaceHolder.Callback {
         }
     }
 
+
+    public void addDrawer(Drawer drawer) {
+        drawers.add(drawer);
+    }
 
 
 }

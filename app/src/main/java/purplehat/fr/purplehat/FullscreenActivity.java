@@ -1,14 +1,23 @@
 package purplehat.fr.purplehat;
 
+
 import android.app.Activity;
 import android.content.Context;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.net.wifi.WifiInfo;
+import android.net.wifi.WifiManager;
 import android.os.Bundle;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
 
 import java.io.IOException;
 
+import purplehat.fr.purplehat.game.Ball;
+import purplehat.fr.purplehat.game.World;
 import purplehat.fr.purplehat.util.SystemUiHider;
 import purplehat.fr.purplehat.view.DrawingView;
 
@@ -50,8 +59,11 @@ public class FullscreenActivity extends Activity {
     private DrawingView.DrawerThread mDrawerThread;
 
     // We can be either the server or the client, so keep both instances
-    private MasterServer masterServer = null;
-    private MasterClient masterClient = null;
+    private Master master = null;
+    private Slave slave = null;
+
+    // THE WORLD
+    World world = new World();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -106,7 +118,16 @@ public class FullscreenActivity extends Activity {
 */
 
         mDrawerView = (DrawingView) findViewById(R.id.fullscreen_content);
-        mDrawerThread = mDrawerView.getThread();
+        mDrawerView.addDrawer(new DrawingView.Drawer() {
+            @Override
+            public void draw(Canvas canvas) {
+                Paint paint = new Paint();
+                paint.setColor(Color.YELLOW);
+                for (Ball ball : world.getBalls()) {
+                    canvas.drawCircle(ball.getPosition().getX(), ball.getPosition().getY(), ball.getRadius(), paint);
+                }
+            }
+        });
 
         //mDrawerView.setOnTouchListener(new OnBackgroundTouchedListener(mDrawerView));
 
@@ -122,6 +143,18 @@ public class FullscreenActivity extends Activity {
 //            }
 //        });
 
+        //testTheMasterMagic(true);
+    }
+
+    // Magic conversion numbers!
+    public static final double INCHES_TO_MM = 25.4;
+
+    public PhysicalScreen buildBasePhysicalScreen() {
+        DisplayMetrics dm = new DisplayMetrics();
+        getWindowManager().getDefaultDisplay().getMetrics(dm);
+        return new PhysicalScreen(0, 0,
+                (int) (INCHES_TO_MM * dm.widthPixels / dm.xdpi),
+                (int) (INCHES_TO_MM * dm.heightPixels / dm.ydpi));
     }
 
     public void testTheMasterMagic(boolean iAmTheMaster) {
@@ -130,11 +163,12 @@ public class FullscreenActivity extends Activity {
 
         // Setup the master
         if (iAmTheMaster) {
-            masterServer = new MasterServer(port);
-            masterServer.start();
+            WifiManager manager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
+            WifiInfo info = manager.getConnectionInfo();
+            master = new Master(port, info.getMacAddress(), buildBasePhysicalScreen());
         } else {
-            masterClient = new MasterClient(serverHost + ":" + port);
-            masterClient.connect();
+            slave = new Slave();
+            slave.connect(serverHost + ":" + port);
         }
     }
 
@@ -196,17 +230,17 @@ public class FullscreenActivity extends Activity {
     @Override
     protected void onStop() {
         super.onStop();
-        if (masterServer != null) {
+        if (master != null) {
             try {
-                masterServer.stop();
+                master.stop();
             } catch (IOException e) {
                 e.printStackTrace();
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
         }
-        if (masterClient != null) {
-            masterClient.close();
+        if (slave != null) {
+            slave.close();
         }
     }
 }
