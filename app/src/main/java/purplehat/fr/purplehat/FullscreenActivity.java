@@ -20,6 +20,8 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 
+import org.json.JSONObject;
+
 import purplehat.fr.purplehat.view.DrawingView;
 import java.io.IOException;
 
@@ -166,6 +168,13 @@ public class FullscreenActivity extends Activity {
         } else {
             slave = new Slave();
             slave.connect(serverHost + ":" + port);
+
+            slave.addListener("views changes", new Slave.Listener() {
+                @Override
+                public void notify(JSONObject data) {
+                    Log.d("ACTIVITY", "views changed" + data);
+                }
+            });
         }
     }
 

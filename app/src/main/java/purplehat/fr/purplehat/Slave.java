@@ -28,20 +28,6 @@ public class Slave {
 
     public Slave() {
         allListeners = new HashMap<String, Collection<Listener>>();
-
-        addListener("views changes", new Listener() {
-            @Override
-            public void notify(JSONObject data) {
-                Log.d(LOG_TAG, "views changed" + data);
-            }
-        });
-
-        addListener("white hit", new Listener() {
-            @Override
-            public void notify(JSONObject data) {
-                Log.d(LOG_TAG, "white hit" + data);
-            }
-        });
     }
 
     public void addListener(String action, Listener listener) {
