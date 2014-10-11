@@ -1,16 +1,20 @@
 package purplehat.fr.purplehat;
 
+import purplehat.fr.purplehat.util.SystemUiHider;
+
 import android.annotation.TargetApi;
 import android.app.Activity;
+import android.content.Context;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 
 import purplehat.fr.purplehat.util.SystemUiHider;
 import purplehat.fr.purplehat.view.DrawingView;
-
+import java.io.IOException;
 
 /**
  * An example full-screen activity that shows and hides the system UI (i.e.
@@ -48,6 +52,10 @@ public class FullscreenActivity extends Activity {
     private SystemUiHider mSystemUiHider;
     private  DrawingView mDrawerView;
     private DrawingView.DrawerThread mDrawerThread;
+
+    // We can be either the server or the client, so keep both instances
+    private MasterServer masterServer = null;
+    private MasterClient masterClient = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -115,6 +123,74 @@ public class FullscreenActivity extends Activity {
 
     }
 
+    public void testTheMasterMagic(boolean iAmTheMaster) {
+        int port = 4242;
+        String serverHost = "192.168.1.241";
+
+        // Setup the master
+        if (iAmTheMaster) {
+            masterServer = new MasterServer(port);
+            masterServer.start();
+        } else {
+            masterClient = new MasterClient(serverHost + ":" + port);
+            masterClient.connect();
+        }
+    }
+
+    public void testReadBroadcastedPackets() {
+        // Test : read broadcasted packets
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                Context context = getApplicationContext();
+                int port = 4242;
+                BroadcastService broadcastService = null;
+                try {
+                    broadcastService = new BroadcastService(context, port);
+                } catch (IOException _) {
+                    return;
+                }
+
+                // byte[] data = {42, 13, 37, 6, 66};
+                while (true) {
+                    try {
+                        //broadcastService.send(data, data.length);
+                        byte[] data = broadcastService.receive(5);
+                        Log.d(data.toString(), "coucou");
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }).start();
+    }
+
+    public void testWriteBroadcastedPackets() {
+        // Test : write broadcasted packets
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                Context context = getApplicationContext();
+                int port = 4242;
+                BroadcastService broadcastService = null;
+                try {
+                    broadcastService = new BroadcastService(context, port);
+                } catch (IOException _) {
+                    return;
+                }
+
+                byte[] data = {42, 13, 37, 6, 66};
+                while (true) {
+                    try {
+                        broadcastService.send(data, data.length);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }).start();
+    }
+
     @Override
     protected void onPostCreate(Bundle savedInstanceState) {
         super.onPostCreate(savedInstanceState);
@@ -125,6 +201,22 @@ public class FullscreenActivity extends Activity {
         delayedHide(100);
     }
 
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if (masterServer != null) {
+            try {
+                masterServer.stop();
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        if (masterClient != null) {
+            masterClient.close();
+        }
+    }
 
     /**
      * Touch listener to use for in-layout UI controls to delay hiding the
