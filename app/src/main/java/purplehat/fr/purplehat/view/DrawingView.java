@@ -14,6 +14,10 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.widget.TextView;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+
 import purplehat.fr.purplehat.screen.ScreenUtilitiesService;
 
 /**
@@ -22,6 +26,12 @@ import purplehat.fr.purplehat.screen.ScreenUtilitiesService;
 public class DrawingView extends SurfaceView implements SurfaceHolder.Callback {
 
     public static final String TAG = "DrawingView";
+
+    public interface Drawer {
+        public void draw(Canvas canvas);
+    }
+
+    private Collection<Drawer> drawers;
 
     public class DrawerThread extends Thread {
         private final SurfaceHolder mSurfaceHolder;
@@ -32,6 +42,8 @@ public class DrawingView extends SurfaceView implements SurfaceHolder.Callback {
         private boolean horizontalMovement = false;
         PointF touchLocation = new PointF(0f, 0f);
         float lineWidth;
+
+
 
         boolean mRun = false;
 
@@ -67,7 +79,6 @@ public class DrawingView extends SurfaceView implements SurfaceHolder.Callback {
             synchronized (mSurfaceHolder) {
                 mCanvasWidth = width;
                 mCanvasHeight = height;
-
             }
         }
 
@@ -80,7 +91,7 @@ public class DrawingView extends SurfaceView implements SurfaceHolder.Callback {
 
         }
 
-        void doVerticalMove(float x, float width) {
+        void doVerticalMove(float x, float width, Direction direction) {
             verticalMovement = true;
             lineWidth = width;
             touchLocation.x = x;
@@ -149,6 +160,10 @@ public class DrawingView extends SurfaceView implements SurfaceHolder.Callback {
                         paint);
             }
 
+            for (Drawer d : drawers) {
+                d.draw(canvas);
+            }
+
         }
 
     } // THREAD
@@ -162,17 +177,17 @@ public class DrawingView extends SurfaceView implements SurfaceHolder.Callback {
     /** The thread that actually draws the animation */
     private DrawerThread thread;
 
-
     private static final int MIN_TOUCH_DISTANCE_DIRECTION = 100;
     private static final int LINE_WIDTH = 80;
 
-    private static enum Direction {
-        HORIZONTAL,
-        VERTICAL
+    public enum Direction {
+        UP_DOWN,
+        DOWN_UP,
+        LEFT_RIGHT,
+        RIGHT_LEFT
     }
 
     PointF origin;
-    Direction direction;
 
     public DrawingView(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -190,10 +205,7 @@ public class DrawingView extends SurfaceView implements SurfaceHolder.Callback {
         });
 
         setFocusable(true); // make sure we get key events
-    }
-
-    public DrawerThread getThread() {
-        return thread;
+        drawers = Collections.synchronizedCollection(new ArrayList<Drawer>());
     }
 
     @Override
@@ -228,12 +240,10 @@ public class DrawingView extends SurfaceView implements SurfaceHolder.Callback {
 
         // Detect movement direction
         if (dist_x > MIN_TOUCH_DISTANCE_DIRECTION && dist_y < MIN_TOUCH_DISTANCE_DIRECTION) {
-            direction = Direction.HORIZONTAL;
             thread.doHorizontalMove(y, LINE_WIDTH);
             return true;
         } else if (dist_y > MIN_TOUCH_DISTANCE_DIRECTION && dist_x < MIN_TOUCH_DISTANCE_DIRECTION) {
-            direction = Direction.VERTICAL;
-            thread.doVerticalMove(x, LINE_WIDTH);
+            thread.doVerticalMove(x, LINE_WIDTH, Direction.DOWN_UP);
             return true;
         }
         return false;
@@ -270,6 +280,10 @@ public class DrawingView extends SurfaceView implements SurfaceHolder.Callback {
         }
     }
 
+
+    public void addDrawer(Drawer drawer) {
+        drawers.add(drawer);
+    }
 
 
 }

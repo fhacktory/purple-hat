@@ -1,20 +1,25 @@
 package purplehat.fr.purplehat;
 
-import purplehat.fr.purplehat.util.SystemUiHider;
 
-import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Context;
-import android.os.Build;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.net.wifi.WifiInfo;
+import android.net.wifi.WifiManager;
 import android.os.Bundle;
-import android.os.Handler;
+import android.util.DisplayMetrics;
 import android.util.Log;
-import android.view.MotionEvent;
 import android.view.View;
+import android.view.WindowManager;
 
+import java.io.IOException;
+
+import purplehat.fr.purplehat.game.Ball;
+import purplehat.fr.purplehat.game.World;
 import purplehat.fr.purplehat.util.SystemUiHider;
 import purplehat.fr.purplehat.view.DrawingView;
-import java.io.IOException;
 import java.net.InetAddress;
 
 /**
@@ -40,7 +45,7 @@ public class FullscreenActivity extends Activity {
      * If set, will toggle the system UI visibility upon interaction. Otherwise,
      * will show the system UI visibility upon interaction.
      */
-    private static final boolean TOGGLE_ON_CLICK = true;
+    private static final boolean TOGGLE_ON_CLICK = false;
 
     /**
      * The flags to pass to {@link SystemUiHider#getInstance}.
@@ -51,12 +56,15 @@ public class FullscreenActivity extends Activity {
      * The instance of the {@link SystemUiHider} for this activity.
      */
     private SystemUiHider mSystemUiHider;
-    private  DrawingView mDrawerView;
+    private DrawingView mDrawerView;
     private DrawingView.DrawerThread mDrawerThread;
 
     // We can be either the server or the client, so keep both instances
-    private MasterServer masterServer = null;
-    private MasterClient masterClient = null;
+    private Master master = null;
+    private Slave slave = null;
+
+    // THE WORLD
+    World world = new World();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,9 +73,14 @@ public class FullscreenActivity extends Activity {
         setContentView(R.layout.activity_fullscreen);
 
         final View contentView = findViewById(R.id.fullscreen_content);
+        getWindow().setFlags(
+                WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        getActionBar().hide();
 
         // Set up an instance of SystemUiHider to control the system UI for
         // this activity.
+        /*
         mSystemUiHider = SystemUiHider.getInstance(this, contentView, HIDER_FLAGS);
         mSystemUiHider.setup();
         mSystemUiHider
@@ -103,27 +116,38 @@ public class FullscreenActivity extends Activity {
                         }
                     }
                 });
-
+*/
 
         mDrawerView = (DrawingView) findViewById(R.id.fullscreen_content);
-        mDrawerThread = mDrawerView.getThread();
-
-        //mDrawerView.setOnTouchListener(new OnBackgroundTouchedListener(mDrawerView));
-
-        // Set up the user interaction to manually show or hide the system UI.
-        contentView.setOnClickListener(new View.OnClickListener() {
+        mDrawerView.addDrawer(new DrawingView.Drawer() {
             @Override
-            public void onClick(View view) {
-                if (TOGGLE_ON_CLICK) {
-                    mSystemUiHider.toggle();
-                } else {
-                    mSystemUiHider.show();
+            public void draw(Canvas canvas) {
+                Paint paint = new Paint();
+                paint.setColor(Color.YELLOW);
+                for (Ball ball : world.getBalls()) {
+                    canvas.drawCircle(ball.getPosition().getX(), ball.getPosition().getY(), ball.getRadius(), paint);
                 }
             }
         });
 
+        //mDrawerView.setOnTouchListener(new OnBackgroundTouchedListener(mDrawerView));
+
+//        // Set up the user interaction to manually show or hide the system UI.
+//        contentView.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//                if (TOGGLE_ON_CLICK) {
+//                    mSystemUiHider.toggle();
+//                } else {
+//                    mSystemUiHider.hide();
+//                }
+//            }
+//        });
+
+        //testTheMasterMagic(true);
+
         // testReadBroadcastedPackets();
-        testDiscoveryAskConnexion();
+        // testDiscoveryAskConnexion();
         // testDiscoveryWaitConnexion();
     }
 
@@ -170,17 +194,29 @@ public class FullscreenActivity extends Activity {
         }).start();
     }
 
+    // Magic conversion numbers!
+    public static final double INCHES_TO_MM = 25.4;
+
+    public PhysicalScreen buildBasePhysicalScreen() {
+        DisplayMetrics dm = new DisplayMetrics();
+        getWindowManager().getDefaultDisplay().getMetrics(dm);
+        return new PhysicalScreen(0, 0,
+                (int) (INCHES_TO_MM * dm.widthPixels / dm.xdpi),
+                (int) (INCHES_TO_MM * dm.heightPixels / dm.ydpi));
+    }
+
     public void testTheMasterMagic(boolean iAmTheMaster) {
         int port = 4242;
         String serverHost = "192.168.1.241";
 
         // Setup the master
         if (iAmTheMaster) {
-            masterServer = new MasterServer(port);
-            masterServer.start();
+            WifiManager manager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
+            WifiInfo info = manager.getConnectionInfo();
+            master = new Master(port, info.getMacAddress(), buildBasePhysicalScreen());
         } else {
-            masterClient = new MasterClient(serverHost + ":" + port);
-            masterClient.connect();
+            slave = new Slave();
+            slave.connect(serverHost + ":" + port);
         }
     }
 
@@ -236,62 +272,23 @@ public class FullscreenActivity extends Activity {
         }).start();
     }
 
-    @Override
-    protected void onPostCreate(Bundle savedInstanceState) {
-        super.onPostCreate(savedInstanceState);
-
-        // Trigger the initial hide() shortly after the activity has been
-        // created, to briefly hint to the user that UI controls
-        // are available.
-        delayedHide(100);
-    }
 
     @Override
     protected void onStop() {
         super.onStop();
-        if (masterServer != null) {
+        if (master != null) {
             try {
-                masterServer.stop();
+                master.stop();
             } catch (IOException e) {
                 e.printStackTrace();
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
         }
-        if (masterClient != null) {
-            masterClient.close();
+        if (slave != null) {
+            slave.close();
         }
-    }
-
-    /**
-     * Touch listener to use for in-layout UI controls to delay hiding the
-     * system UI. This is to prevent the jarring behavior of controls going away
-     * while interacting with activity UI.
-     */
-    View.OnTouchListener mDelayHideTouchListener = new View.OnTouchListener() {
-        @Override
-        public boolean onTouch(View view, MotionEvent motionEvent) {
-            if (AUTO_HIDE) {
-                delayedHide(AUTO_HIDE_DELAY_MILLIS);
-            }
-            return false;
-        }
-    };
-
-    Handler mHideHandler = new Handler();
-    Runnable mHideRunnable = new Runnable() {
-        @Override
-        public void run() {
-            mSystemUiHider.hide();
-        }
-    };
-
-    /**
-     * Schedules a call to hide() in [delay] milliseconds, canceling any
-     * previously scheduled calls.
-     */
-    private void delayedHide(int delayMillis) {
-        mHideHandler.removeCallbacks(mHideRunnable);
-        mHideHandler.postDelayed(mHideRunnable, delayMillis);
     }
 }
+
+
