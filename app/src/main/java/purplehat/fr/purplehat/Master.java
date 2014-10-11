@@ -8,6 +8,7 @@ import android.util.Log;
 import org.java_websocket.WebSocket;
 import org.java_websocket.handshake.ClientHandshake;
 import org.java_websocket.server.WebSocketServer;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -51,6 +52,31 @@ public class Master {
                 Log.e(LOG_TAG, "error", ex);
             }
         };
+    }
+
+    public void addSlaveScreen(String screenId, PhysicalScreen slaveScreen) {
+        screenMap.put(screenId, slaveScreen);
+        broadcastWorld();
+    }
+
+    public void broadcastWorld() {
+        try {
+            JSONObject data = new JSONObject();
+            data.put("action", "view changed");
+            JSONArray screenList = new JSONArray();
+            for (PhysicalScreen screen : screenMap.values()) {
+                JSONObject screenData = new JSONObject();
+                screenData.put("x1", screen.getX1());
+                screenData.put("y1", screen.getY1());
+                screenData.put("x2", screen.getX2());
+                screenData.put("y2", screen.getY2());
+                screenList.put(screenData);
+            }
+            data.put("rects", screenList);
+            broadcast(data);
+        } catch (JSONException e) {
+            Log.e(LOG_TAG, "new screen json couldn't be constructed");
+        }
     }
 
     public void broadcast(JSONObject obj) {

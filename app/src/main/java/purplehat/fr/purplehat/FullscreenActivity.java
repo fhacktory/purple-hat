@@ -14,6 +14,8 @@ import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
 
+import org.json.JSONObject;
+
 import java.io.IOException;
 
 import purplehat.fr.purplehat.game.Ball;
@@ -133,6 +135,8 @@ public class FullscreenActivity extends Activity {
 
         mDrawerView.setOnTouchListener(new OnBackgroundTouchedListener());
 
+        testTimer();
+
         //testTheMasterMagic(true);
 
         // testReadBroadcastedPackets();
@@ -205,6 +209,15 @@ public class FullscreenActivity extends Activity {
             master = new Master(port, info.getMacAddress(), buildBasePhysicalScreen());
         } else {
             slave = new Slave();
+
+            slave.addListener("views changes", new Slave.Listener() {
+                @Override
+                public void notify(JSONObject data) {
+                    Log.d("ACTIVITY", "views changed" + data);
+                    world.updateFromJson(data);
+                }
+            });
+
             slave.connect(serverHost + ":" + port);
         }
     }
@@ -259,6 +272,18 @@ public class FullscreenActivity extends Activity {
                 }
             }
         }).start();
+    }
+
+    void testTimer() {
+
+        final SyncTimer s = new SyncTimer();
+        s.startAt(System.currentTimeMillis() + 1000);
+        mDrawerView.addDrawer(new DrawingView.Drawer() {
+            @Override
+            public void draw(Canvas canvas) {
+                canvas.drawText("TIME : "+ s.getRelativeTime(), 100, 100, new Paint(Color.RED));
+            }
+        });
     }
 
 
