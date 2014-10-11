@@ -100,7 +100,7 @@ public class DiscoveryService {
         int dy = swipeY - externY;
         byte[] mac = getMACAddress();
 
-        socket = new Socket(InetAddress.getByAddress(masterAddress), DISCOVERY_HANDSHAKE_PORT);
+        socket = new Socket(InetAddress.getByAddress(masterAddress), ConnexionListener.NEW_CONNEXION_PORT);
         socket.getOutputStream().write(mac, 0, 6);
         socket.getOutputStream().write(externIdentifier, 0, 6);
         socket.getOutputStream().write(new byte[]{(byte) (dx & 0x00FF), (byte) ((dx & 0xFF00) >> 8)}, 0, 2);
