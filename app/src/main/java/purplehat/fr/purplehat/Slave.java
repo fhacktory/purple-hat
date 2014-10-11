@@ -10,11 +10,8 @@ import org.json.JSONObject;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.EventListener;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Observable;
-import java.util.Observer;
 
 /**
  * Created by jmcomets on 11/10/14.
@@ -26,10 +23,41 @@ public class Slave {
     }
 
     private static final String LOG_TAG = "MASTER_CLIENT";
-    private final WebSocketClient client;
-    private Map<String, Collection<Listener>> listeners;
+    private WebSocketClient client;
+    private Map<String, Collection<Listener>> allListeners;
 
-    public Slave(String address) {
+    public Slave() {
+        allListeners = new HashMap<String, Collection<Listener>>();
+
+        addListener("views changes", new Listener() {
+            @Override
+            public void emit(JSONObject data) {
+                Log.d(LOG_TAG, "views changed" + data);
+            }
+        });
+
+        addListener("white hit", new Listener() {
+            @Override
+            public void emit(JSONObject data) {
+                Log.d(LOG_TAG, "white hit" + data);
+            }
+        });
+    }
+
+    public void addListener(String action, Listener listener) {
+        Collection<Listener> listeners = allListeners.get(action);
+        if (listeners == null) {
+            listeners = new ArrayList<Listener>();
+            allListeners.put(action, listeners);
+        }
+        listeners.add(listener);
+    }
+
+    public boolean isConnected() {
+        return client != null && client.getConnection().isOpen();
+    }
+
+    public void connect(String address) {
         URI uri = URI.create("ws://" + address);
         client = new WebSocketClient(uri) {
             @Override
@@ -41,10 +69,10 @@ public class Slave {
                 try {
                     JSONObject obj = new JSONObject(message);
                     try {
-                        Collection<Listener> lstns = listeners.get(obj.getString("action"));
-                        if (lstns != null) {
-                            for (Listener lstn : lstns) {
-                                lstn.emit(obj);
+                        Collection<Listener> listeners = allListeners.get(obj.getString("action"));
+                        if (listeners != null) {
+                            for (Listener listener : listeners) {
+                                listener.emit(obj);
                             }
                         }
                     } catch (JSONException e) {
@@ -63,34 +91,20 @@ public class Slave {
             public void onError(Exception ex) {
             }
         };
-        listeners = new HashMap<String, Collection<Listener>>();
-
-        addListener("views changes", new Listener() {
-            @Override
-            public void emit(JSONObject data) {
-                Log.d(LOG_TAG, "views changed" + data);
-            }
-        });
-
-        addListener("white hit", new Listener() {
-            @Override
-            public void emit(JSONObject data) {
-                Log.d(LOG_TAG, "white hit" + data);
-            }
-        });
-    }
-
-    public void addListener(String action, Listener lstn) {
-        Collection<Listener> lstns = listeners.get(action);
-        if (lstns == null) {
-            lstns = new ArrayList<Listener>();
-            listeners.put(action, lstns);
-        }
-        lstns.add(lstn);
     }
 
     // TODO handle when not connected
     public void send(JSONObject obj) {
-        client.send(obj.toString());
+        if (isConnected()) {
+            client.send(obj.toString());
+        } else {
+            Log.w(LOG_TAG, "cannot send, client not connected");
+        }
+    }
+
+    public void close() {
+        if (isConnected()) {
+            client.close();
+        }
     }
 }

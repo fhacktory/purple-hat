@@ -15,7 +15,6 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 
-import purplehat.fr.purplehat.util.SystemUiHider;
 import purplehat.fr.purplehat.view.DrawingView;
 import java.io.IOException;
 
@@ -57,8 +56,8 @@ public class FullscreenActivity extends Activity {
     private DrawingView.DrawerThread mDrawerThread;
 
     // We can be either the server or the client, so keep both instances
-    private Master masterServer = null;
-    private Slave masterClient = null;
+    private Master master = null;
+    private Slave slave = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -124,6 +123,8 @@ public class FullscreenActivity extends Activity {
             }
         });
 
+        testTheMasterMagic(true);
+
     }
 
     // Magic conversion numbers!
@@ -145,11 +146,10 @@ public class FullscreenActivity extends Activity {
         if (iAmTheMaster) {
             WifiManager manager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
             WifiInfo info = manager.getConnectionInfo();
-            masterServer = new Master(port, info.getMacAddress(), buildBasePhysicalScreen());
-            masterServer.start();
+            master = new Master(port, info.getMacAddress(), buildBasePhysicalScreen());
         } else {
-            masterClient = new Slave(serverHost + ":" + port);
-            masterClient.connect();
+            slave = new Slave();
+            slave.connect(serverHost + ":" + port);
         }
     }
 
@@ -220,17 +220,17 @@ public class FullscreenActivity extends Activity {
     @Override
     protected void onStop() {
         super.onStop();
-        if (masterServer != null) {
+        if (master != null) {
             try {
-                masterServer.stop();
+                master.stop();
             } catch (IOException e) {
                 e.printStackTrace();
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
         }
-        if (masterClient != null) {
-            masterClient.close();
+        if (slave != null) {
+            slave.close();
         }
     }
 

@@ -11,6 +11,7 @@ import org.java_websocket.server.WebSocketServer;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.HashMap;
@@ -71,5 +72,9 @@ public class Master {
                 c.send(text);
             }
         }
+    }
+
+    public void stop() throws IOException, InterruptedException {
+        server.stop();
     }
 }
