@@ -28,6 +28,7 @@ public class Master {
     private static final String LOG_TAG = "MASTER_CLIENT";
 
     private PhysicalScreen baseScreen;
+    private String screenId;
 
     public PhysicalScreen getScreen(String id) {
         return screenMap.get(id);
@@ -37,7 +38,8 @@ public class Master {
     private WebSocketServer server;
 
     public void start() {
-        this.server.start();
+        Log.d(LOG_TAG, "master websocket server started");
+        server.start();
     }
 
     public Master(int port, String screenId, PhysicalScreen baseScreen) {
@@ -48,6 +50,7 @@ public class Master {
             baseScreen.setY2(p.y * 2);
         }
         this.baseScreen = baseScreen;
+        this.screenId = screenId;
         screenMap = new HashMap<String, PhysicalScreen>();
         screenMap.put(screenId, baseScreen);
         server = new WebSocketServer(new InetSocketAddress(port)) {
@@ -81,7 +84,7 @@ public class Master {
     public void broadcastWorld() {
         try {
             JSONObject data = new JSONObject();
-            data.put("action", "view changed");
+            data.put("action", "views changed");
             JSONArray screenList = new JSONArray();
             for (PhysicalScreen screen : screenMap.values()) {
                 JSONObject screenData = new JSONObject();
@@ -121,5 +124,9 @@ public class Master {
 
     public void stop() throws IOException, InterruptedException {
         server.stop();
+    }
+
+    public String getScreenId() {
+        return screenId;
     }
 }

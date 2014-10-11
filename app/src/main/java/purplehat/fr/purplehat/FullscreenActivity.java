@@ -165,14 +165,20 @@ public class FullscreenActivity extends Activity {
 
         new Thread(new ConnexionListener()).start();
 
-        // onExitingSwipeEvent(42, 42);
+    }
+
+    @Override
+    protected void onPostCreate(Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
+
+        //onExitingSwipeEvent(42, 42);
         onEntrantSwipeEvent(42, 42);
     }
 
     public void becomeASlave(byte[] masterAddress) {
         Log.d("TG", "become slave biatch");
         slave = new Slave();
-        slave.addListener("views changes", new Slave.Listener() {
+        slave.addListener("views changed", new Slave.Listener() {
             @Override
             public void notify(JSONObject data) {
                 Log.d("ACTIVITY", "views changed" + data);
@@ -185,7 +191,7 @@ public class FullscreenActivity extends Activity {
 
     public void becomeAMaster() {
         Log.d("TG", "become master biatch");
-        master = new Master(MasterProxy.MASTER_PROXY_PORT_DE_OUF, "4242424242424242424242", null);
+        master = new Master(MasterProxy.MASTER_PROXY_PORT_DE_OUF, "424242", null);
         master.start();
     }
 

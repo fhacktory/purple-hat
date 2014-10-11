@@ -94,6 +94,7 @@ public class Slave {
             public void onError(Exception ex) {
             }
         };
+        client.connect();
     }
 
     // TODO handle when not connected

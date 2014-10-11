@@ -33,16 +33,18 @@ public class DiscoveryService {
         byte[] sender = new byte[6];
         broadcastService.receive(4, sender);
         InetAddress address = InetAddress.getByAddress(new byte[]{sender[0], sender[1], sender[2], sender[3]});
-        byte[] mac = getMACAddress();
 
         byte[] masterAddrBytes = null;
         if (masterAddress == null) {
             activateSuperSayanMode(); // TODO devenir un master
-            masterAddrBytes = new byte[]{0, 0, 0, 0};
-        }
-        else {
+            masterAddrBytes = getLocalIp().getAddress();
+        } else {
             masterAddrBytes = masterAddress.getAddress();
         }
+
+        Master master = FullscreenActivity.getInstance().getMaster();
+        byte[] mac = (master != null) ? master.getScreenId().getBytes() : getMACAddress();
+
         try {
             Thread.sleep(500);
         } catch (InterruptedException _) {
