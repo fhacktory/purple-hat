@@ -50,6 +50,10 @@ public class FullscreenActivity extends Activity {
      */
     private SystemUiHider mSystemUiHider;
 
+    // We can be either the server or the client, so keep both instances
+    private MasterServer masterServer = null;
+    private MasterClient masterClient = null;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -118,8 +122,25 @@ public class FullscreenActivity extends Activity {
         // while interacting with the UI.
         findViewById(R.id.dummy_button).setOnTouchListener(mDelayHideTouchListener);
 
+        //testTheMasterMagic(false);
+        //testTheMasterMagic(true);
+
         // testReadBroadcastedPackets();
         // testWriteBroadcastedPackets();
+    }
+
+    public void testTheMasterMagic(boolean iAmTheMaster) {
+        int port = 4242;
+        String serverHost = "192.168.1.241";
+
+        // Setup the master
+        if (iAmTheMaster) {
+            masterServer = new MasterServer(port);
+            masterServer.start();
+        } else {
+            masterClient = new MasterClient(serverHost + ":" + port);
+            masterClient.connect();
+        }
     }
 
     public void testReadBroadcastedPackets() {
@@ -186,6 +207,22 @@ public class FullscreenActivity extends Activity {
         delayedHide(100);
     }
 
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if (masterServer != null) {
+            try {
+                masterServer.stop();
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        if (masterClient != null) {
+            masterClient.close();
+        }
+    }
 
     /**
      * Touch listener to use for in-layout UI controls to delay hiding the

@@ -1,5 +1,7 @@
 package purplehat.fr.purplehat;
 
+import android.util.Log;
+
 import org.java_websocket.WebSocket;
 import org.java_websocket.handshake.ClientHandshake;
 import org.java_websocket.server.WebSocketServer;
@@ -13,19 +15,20 @@ import java.util.Collection;
  * Created by jmcomets on 11/10/14.
  */
 public class MasterServer extends WebSocketServer {
-    public MasterServer(InetSocketAddress address) {
-        super(address);
+    private static final String LOG_TAG = "MASTER_CLIENT";
+
+    public MasterServer(int port) {
+        super(new InetSocketAddress(port));
     }
 
     @Override
     public void onOpen(WebSocket conn, ClientHandshake handshake) {
-        // TODO gérer les connexions
-        conn.send("ok");
+        Log.d(LOG_TAG, "connection opened");
     }
 
     @Override
     public void onClose(WebSocket conn, int code, String reason, boolean remote) {
-        // TODO gérer les déconnexions
+        Log.d(LOG_TAG, "connection closed");
     }
 
     @Override
@@ -34,18 +37,18 @@ public class MasterServer extends WebSocketServer {
             JSONObject msg = new JSONObject(message);
             String action = msg.getString("action");
             if (action != null) {
-                System.out.println("remote '" + conn.getRemoteSocketAddress().getHostName()
+                Log.d(LOG_TAG, "remote '" + conn.getRemoteSocketAddress().getHostName()
                         + "', action: '" + action + "'");
 
             }
         } catch (JSONException e) {
-            e.printStackTrace();
+            Log.e(LOG_TAG, "json message not decoded", e);
         }
     }
 
     @Override
     public void onError(WebSocket conn, Exception ex) {
-        // TODO gérer les erreurs
+        Log.e(LOG_TAG, "error", ex);
     }
 
     /**
