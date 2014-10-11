@@ -80,9 +80,16 @@ public class FullscreenActivity extends Activity {
         return instance;
     }
 
+    DiscoveryService discoveryService = null;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         instance = this;
+        try {
+            discoveryService = new DiscoveryService(getApplicationContext());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
         super.onCreate(savedInstanceState);
 
@@ -161,14 +168,14 @@ public class FullscreenActivity extends Activity {
 
     public void becomeASlave(byte[] masterAddress) {
         slave = new Slave();
-        try {
-            slave.connect(
-                    InetAddress.getByAddress(masterAddress).getHostAddress()
-                            .concat(":")
-                            .concat(String.valueOf(MasterProxy.MASTER_PROXY_PORT_DE_OUF)));
-        } catch (UnknownHostException e) {
-            e.printStackTrace();
-        }
+        slave.addListener("views changes", new Slave.Listener() {
+            @Override
+            public void notify(JSONObject data) {
+                Log.d("ACTIVITY", "views changed" + data);
+                world.updateFromJson(data);
+            }
+        });
+        slave.connect(masterAddress, MasterProxy.MASTER_PROXY_PORT_DE_OUF);
     }
 
 
@@ -177,11 +184,23 @@ public class FullscreenActivity extends Activity {
     }
 
     public void onExitingSwipeEvent(int swipeX, int swipeY) {
-        // TODO
+        if (slave != null) {
+            try {
+                discoveryService.waitConnexion(InetAddress.getByAddress(slave.getMasterAddress()), swipeX, swipeY);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     public void onEntrantSwipeEvent(int swipeX, int swipeY) {
-        // TODO
+        if (slave == null && master == null) {
+            try {
+                discoveryService.askConnexion(swipeX, swipeY);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     public void testDiscoveryWaitConnexion() {
@@ -247,7 +266,7 @@ public class FullscreenActivity extends Activity {
                 }
             });
 
-            slave.connect(serverHost + ":" + port);
+            // slave.connect(serverHost, port);
         }
     }
 
