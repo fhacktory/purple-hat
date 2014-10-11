@@ -100,6 +100,15 @@ public class DiscoveryService {
         int dy = swipeY - externY;
         byte[] mac = getMACAddress();
 
+        synchronized (SlaveProxy.getSlave()) {
+            if (SlaveProxy.getSlave() != null) {
+                SlaveProxy.getSlave().connect(
+                        InetAddress.getByAddress(masterAddress).getHostAddress()
+                                .concat(":")
+                                .concat(String.valueOf(MasterProxy.MASTER_PROXY_PORT_DE_OUF)));
+            }
+        }
+
         socket = new Socket(InetAddress.getByAddress(masterAddress), ConnexionListener.NEW_CONNEXION_PORT);
         socket.getOutputStream().write(mac, 0, 6);
         socket.getOutputStream().write(externIdentifier, 0, 6);
