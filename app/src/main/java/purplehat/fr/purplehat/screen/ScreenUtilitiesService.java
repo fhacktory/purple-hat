@@ -35,6 +35,28 @@ public class ScreenUtilitiesService {
                 (int) (INCHES_TO_MM * point.y / dm.ydpi));
     }
 
+    public static Point mm2pixel(Point point) {
+        DisplayMetrics dm = new DisplayMetrics();
+        FullscreenActivity.getInstance().getWindowManager().getDefaultDisplay().getMetrics(dm);
+        return new Point(
+                (int) (point.x * dm.xdpi / INCHES_TO_MM),
+                (int) (point.y * dm.ydpi / INCHES_TO_MM));
+    }
+
+    public static Point mm2pixel(Point point, Point offset) {
+        DisplayMetrics dm = new DisplayMetrics();
+        FullscreenActivity.getInstance().getWindowManager().getDefaultDisplay().getMetrics(dm);
+        return new Point(
+                (int) ((point.x - offset.x) * dm.xdpi / INCHES_TO_MM),
+                (int) ((point.y - offset.y) * dm.ydpi / INCHES_TO_MM));
+    }
+
+    public static float mm2pixel(float distance) {
+        DisplayMetrics dm = new DisplayMetrics();
+        FullscreenActivity.getInstance().getWindowManager().getDefaultDisplay().getMetrics(dm);
+        return distance * dm.xdpi / (float) INCHES_TO_MM;
+    }
+
     public static PhysicalScreen buildBasePhysicalScreen() {
         DisplayMetrics dm = new DisplayMetrics();
         FullscreenActivity.getInstance().getWindowManager().getDefaultDisplay().getMetrics(dm);

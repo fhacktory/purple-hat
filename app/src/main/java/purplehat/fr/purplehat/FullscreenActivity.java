@@ -6,6 +6,7 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Point;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
@@ -67,7 +68,7 @@ public class FullscreenActivity extends Activity {
 
     private Slave slave;
 
-    private Rect2<Double> viewport;
+    private Point viewportOffset;
 
     public Master getMaster() {
         return master;
@@ -94,7 +95,7 @@ public class FullscreenActivity extends Activity {
             e.printStackTrace();
         }
 
-        viewport = new Rect2<Double>(0.0, 0.0, 1.0, 1.0);
+        viewportOffset = new Point(0, 0);
 
         super.onCreate(savedInstanceState);
 
@@ -147,16 +148,19 @@ public class FullscreenActivity extends Activity {
 */
 
         mDrawerView = (DrawingView) findViewById(R.id.fullscreen_content);
+        final DisplayMetrics dm = new DisplayMetrics();
+        FullscreenActivity.getInstance().getWindowManager().getDefaultDisplay().getMetrics(dm);
         mDrawerView.addDrawer(new DrawingView.Drawer() {
             @Override
             public void draw(Canvas canvas) {
                 Paint paint = new Paint();
                 paint.setColor(Color.YELLOW);
                 for (Ball ball : world.getBalls()) {
-                    canvas.drawCircle(ball.getPosition().getX().floatValue(),
-                            ball.getPosition().getY().floatValue(),
-                            ball.getRadius().floatValue(),
-                            paint);
+                    Point p = ScreenUtilitiesService.mm2pixel(new Point(ball.getPosition().getX().intValue(),
+                            ball.getPosition().getY().intValue()),
+                            viewportOffset);
+
+                    canvas.drawCircle(p.x, p.y, ScreenUtilitiesService.mm2pixel(ball.getRadius().floatValue()), paint);
                 }
             }
         });

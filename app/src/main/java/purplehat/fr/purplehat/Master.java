@@ -57,6 +57,7 @@ public class Master {
             @Override
             public void onOpen(WebSocket conn, ClientHandshake handshake) {
                 Log.d(LOG_TAG, "connection opened");
+                // TODO send position
             }
 
             @Override

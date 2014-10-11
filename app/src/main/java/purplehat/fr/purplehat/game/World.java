@@ -21,8 +21,8 @@ public class World {
         balls = new ArrayList<Ball>();
 
         Ball ball = new Ball();
-        ball.setPosition(new Vector2<Double>(0.300, 0.400));
-        ball.setRadius(0.200);
+        ball.setPosition(new Vector2<Double>(30.0, 40.0));
+        ball.setRadius(20.0);
         balls.add(ball);
     }
 
