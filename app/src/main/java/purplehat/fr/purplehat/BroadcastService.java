@@ -18,12 +18,21 @@ public class BroadcastService {
     private DatagramSocket socket;
     private int port;
 
-    public BroadcastService(Context context, int port) throws IOException {
+    public  BroadcastService(Context context, int port) throws IOException {
         this.context = context;
         this.port = port;
         this.broadcastAddress = getBroadcastAddress();
         this.socket = new DatagramSocket(this.port);
         this.socket.setBroadcast(true);
+    }
+
+    public  BroadcastService(Context context, int port, int timeout) throws IOException {
+        this.context = context;
+        this.port = port;
+        this.broadcastAddress = getBroadcastAddress();
+        this.socket = new DatagramSocket(this.port);
+        this.socket.setBroadcast(true);
+        this.socket.setSoTimeout(timeout);
     }
 
     private InetAddress getBroadcastAddress() throws IOException {
