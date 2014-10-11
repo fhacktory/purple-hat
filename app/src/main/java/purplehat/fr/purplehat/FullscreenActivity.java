@@ -1,10 +1,6 @@
 package purplehat.fr.purplehat;
 
-import purplehat.fr.purplehat.game.Ball;
-import purplehat.fr.purplehat.game.World;
-import purplehat.fr.purplehat.util.SystemUiHider;
 
-import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Canvas;
@@ -12,18 +8,21 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
-import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
 import android.util.DisplayMetrics;
 import android.util.Log;
-import android.view.MotionEvent;
 import android.view.View;
+import android.view.WindowManager;
 
 import org.json.JSONObject;
 
-import purplehat.fr.purplehat.view.DrawingView;
 import java.io.IOException;
+
+import purplehat.fr.purplehat.game.Ball;
+import purplehat.fr.purplehat.game.World;
+import purplehat.fr.purplehat.gesturelistener.OnBackgroundTouchedListener;
+import purplehat.fr.purplehat.util.SystemUiHider;
+import purplehat.fr.purplehat.view.DrawingView;
 
 /**
  * An example full-screen activity that shows and hides the system UI (i.e.
@@ -48,7 +47,7 @@ public class FullscreenActivity extends Activity {
      * If set, will toggle the system UI visibility upon interaction. Otherwise,
      * will show the system UI visibility upon interaction.
      */
-    private static final boolean TOGGLE_ON_CLICK = true;
+    private static final boolean TOGGLE_ON_CLICK = false;
 
     /**
      * The flags to pass to {@link SystemUiHider#getInstance}.
@@ -59,7 +58,7 @@ public class FullscreenActivity extends Activity {
      * The instance of the {@link SystemUiHider} for this activity.
      */
     private SystemUiHider mSystemUiHider;
-    private  DrawingView mDrawerView;
+    private DrawingView mDrawerView;
     private DrawingView.DrawerThread mDrawerThread;
 
     // We can be either the server or the client, so keep both instances
@@ -76,9 +75,14 @@ public class FullscreenActivity extends Activity {
         setContentView(R.layout.activity_fullscreen);
 
         final View contentView = findViewById(R.id.fullscreen_content);
+        getWindow().setFlags(
+                WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        getActionBar().hide();
 
         // Set up an instance of SystemUiHider to control the system UI for
         // this activity.
+        /*
         mSystemUiHider = SystemUiHider.getInstance(this, contentView, HIDER_FLAGS);
         mSystemUiHider.setup();
         mSystemUiHider
@@ -114,7 +118,7 @@ public class FullscreenActivity extends Activity {
                         }
                     }
                 });
-
+*/
 
         mDrawerView = (DrawingView) findViewById(R.id.fullscreen_content);
         mDrawerView.addDrawer(new DrawingView.Drawer() {
@@ -128,19 +132,9 @@ public class FullscreenActivity extends Activity {
             }
         });
 
-        //mDrawerView.setOnTouchListener(new OnBackgroundTouchedListener(mDrawerView));
+        mDrawerView.setOnTouchListener(new OnBackgroundTouchedListener());
 
-        // Set up the user interaction to manually show or hide the system UI.
-        contentView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if (TOGGLE_ON_CLICK) {
-                    mSystemUiHider.toggle();
-                } else {
-                    mSystemUiHider.show();
-                }
-            }
-        });
+        testTimer();
 
         //testTheMasterMagic(true);
     }
@@ -232,15 +226,18 @@ public class FullscreenActivity extends Activity {
         }).start();
     }
 
-    @Override
-    protected void onPostCreate(Bundle savedInstanceState) {
-        super.onPostCreate(savedInstanceState);
+    void testTimer() {
 
-        // Trigger the initial hide() shortly after the activity has been
-        // created, to briefly hint to the user that UI controls
-        // are available.
-        delayedHide(100);
+        final SyncTimer s = new SyncTimer();
+        s.startAt(System.currentTimeMillis() + 1000);
+        mDrawerView.addDrawer(new DrawingView.Drawer() {
+            @Override
+            public void draw(Canvas canvas) {
+                canvas.drawText("TIME : "+ s.getRelativeTime(), 100, 100, new Paint(Color.RED));
+            }
+        });
     }
+
 
     @Override
     protected void onStop() {
@@ -258,36 +255,6 @@ public class FullscreenActivity extends Activity {
             slave.close();
         }
     }
-
-    /**
-     * Touch listener to use for in-layout UI controls to delay hiding the
-     * system UI. This is to prevent the jarring behavior of controls going away
-     * while interacting with activity UI.
-     */
-    View.OnTouchListener mDelayHideTouchListener = new View.OnTouchListener() {
-        @Override
-        public boolean onTouch(View view, MotionEvent motionEvent) {
-            if (AUTO_HIDE) {
-                delayedHide(AUTO_HIDE_DELAY_MILLIS);
-            }
-            return false;
-        }
-    };
-
-    Handler mHideHandler = new Handler();
-    Runnable mHideRunnable = new Runnable() {
-        @Override
-        public void run() {
-            mSystemUiHider.hide();
-        }
-    };
-
-    /**
-     * Schedules a call to hide() in [delay] milliseconds, canceling any
-     * previously scheduled calls.
-     */
-    private void delayedHide(int delayMillis) {
-        mHideHandler.removeCallbacks(mHideRunnable);
-        mHideHandler.postDelayed(mHideRunnable, delayMillis);
-    }
 }
+
+
