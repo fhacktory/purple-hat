@@ -6,10 +6,11 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.PointF;
+import android.graphics.Rect;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
-import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
@@ -18,9 +19,14 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.Random;
 
+import purplehat.fr.purplehat.Geometrics.PolygonUtill;
 import purplehat.fr.purplehat.game.World;
 import purplehat.fr.purplehat.gesturelistener.OnBackgroundTouchedListener;
+import purplehat.fr.purplehat.screen.ScreenUtilitiesService;
 import purplehat.fr.purplehat.util.SystemUiHider;
 import purplehat.fr.purplehat.view.DrawingView;
 
@@ -408,7 +414,7 @@ public class FullscreenActivity extends Activity {
                 for(int i =0 ; i < ps.length - 1; i++) {
                     canvas.drawLine(ps[i].x, ps[i].y, ps[i +1 ].x, ps[i+1].y, paint);
                 }
-                canvas.drawText("TIME : " + s.getRelativeTime(), 100, 100, new Paint(Color.RED));
+
             }
         });
     }
