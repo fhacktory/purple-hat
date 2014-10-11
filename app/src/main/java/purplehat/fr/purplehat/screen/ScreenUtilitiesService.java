@@ -27,6 +27,22 @@ public class ScreenUtilitiesService {
         return center;
     }
 
+    public static int getWidth() {
+        WindowManager wm = (WindowManager) PurpleHat.getAppContext().getSystemService(Context.WINDOW_SERVICE);
+        Display display = wm.getDefaultDisplay();
+        DisplayMetrics dm = new DisplayMetrics();
+        display.getMetrics(dm);
+        return dm.widthPixels;
+    }
+
+    public static int getHeight() {
+        WindowManager wm = (WindowManager) PurpleHat.getAppContext().getSystemService(Context.WINDOW_SERVICE);
+        Display display = wm.getDefaultDisplay();
+        DisplayMetrics dm = new DisplayMetrics();
+        display.getMetrics(dm);
+        return dm.heightPixels;
+    }
+
     public static Point pixel2mm(Point point) {
         DisplayMetrics dm = new DisplayMetrics();
         FullscreenActivity.getInstance().getWindowManager().getDefaultDisplay().getMetrics(dm);
