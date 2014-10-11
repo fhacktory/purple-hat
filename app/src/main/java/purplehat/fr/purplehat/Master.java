@@ -1,6 +1,7 @@
 package purplehat.fr.purplehat;
 
 import android.content.Context;
+import android.graphics.Point;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.util.Log;
@@ -38,8 +39,9 @@ public class Master {
     public Master(int port, String screenId, PhysicalScreen baseScreen) {
         if (baseScreen == null) {
             baseScreen = new PhysicalScreen(0, 0, 0, 0);
-            baseScreen.setX2(ScreenUtilitiesService.getDisplayCenter().x * 2);
-            baseScreen.setY2(ScreenUtilitiesService.getDisplayCenter().y * 2);
+            Point p = ScreenUtilitiesService.pixel2mm(ScreenUtilitiesService.getDisplayCenter());
+            baseScreen.setX2(p.x * 2);
+            baseScreen.setY2(p.y * 2);
         }
         this.baseScreen = baseScreen;
         screenMap = new HashMap<String, PhysicalScreen>();
@@ -67,6 +69,7 @@ public class Master {
     }
 
     public void addSlaveScreen(String screenId, PhysicalScreen slaveScreen) {
+        Log.d(LOG_TAG, "Nombre de client : " + String.valueOf(screenMap.size()));
         screenMap.put(screenId, slaveScreen);
         broadcastWorld();
     }

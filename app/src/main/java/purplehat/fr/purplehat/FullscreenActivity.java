@@ -21,9 +21,11 @@ import java.io.IOException;
 import purplehat.fr.purplehat.game.Ball;
 import purplehat.fr.purplehat.game.World;
 import purplehat.fr.purplehat.gesturelistener.OnBackgroundTouchedListener;
+import purplehat.fr.purplehat.screen.ScreenUtilitiesService;
 import purplehat.fr.purplehat.util.SystemUiHider;
 import purplehat.fr.purplehat.view.DrawingView;
 import java.net.InetAddress;
+import java.net.UnknownHostException;
 
 /**
  * An example full-screen activity that shows and hides the system UI (i.e.
@@ -62,15 +64,26 @@ public class FullscreenActivity extends Activity {
     private DrawingView mDrawerView;
     private DrawingView.DrawerThread mDrawerThread;
 
-    // We can be either the server or the client, so keep both instances
-    private Master master = null;
-    private Slave slave = null;
+    private Slave slave;
+
+    public Master getMaster() {
+        return master;
+    }
+
+    private Master master;
 
     // THE WORLD
     World world = new World();
+    private static FullscreenActivity instance = null;
+
+    public static FullscreenActivity getInstance() {
+        return instance;
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        instance = this;
+
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_fullscreen);
@@ -146,6 +159,31 @@ public class FullscreenActivity extends Activity {
         new Thread(new ConnexionListener()).start();
     }
 
+    public void becomeASlave(byte[] masterAddress) {
+        slave = new Slave();
+        try {
+            slave.connect(
+                    InetAddress.getByAddress(masterAddress).getHostAddress()
+                            .concat(":")
+                            .concat(String.valueOf(MasterProxy.MASTER_PROXY_PORT_DE_OUF)));
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    public void becomeAMaster() {
+        master = new Master(MasterProxy.MASTER_PROXY_PORT_DE_OUF, "4242424242424242424242", null);
+    }
+
+    public void onExitingSwipeEvent(int swipeX, int swipeY) {
+        // TODO
+    }
+
+    public void onEntrantSwipeEvent(int swipeX, int swipeY) {
+        // TODO
+    }
+
     public void testDiscoveryWaitConnexion() {
         new Thread(new Runnable() {
             @Override
@@ -189,17 +227,6 @@ public class FullscreenActivity extends Activity {
         }).start();
     }
 
-    // Magic conversion numbers!
-    public static final double INCHES_TO_MM = 25.4;
-
-    public PhysicalScreen buildBasePhysicalScreen() {
-        DisplayMetrics dm = new DisplayMetrics();
-        getWindowManager().getDefaultDisplay().getMetrics(dm);
-        return new PhysicalScreen(0, 0,
-                (int) (INCHES_TO_MM * dm.widthPixels / dm.xdpi),
-                (int) (INCHES_TO_MM * dm.heightPixels / dm.ydpi));
-    }
-
     public void testTheMasterMagic(boolean iAmTheMaster) {
         int port = 4242;
         String serverHost = "192.168.1.241";
@@ -208,9 +235,9 @@ public class FullscreenActivity extends Activity {
         if (iAmTheMaster) {
             WifiManager manager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
             WifiInfo info = manager.getConnectionInfo();
-            master = new Master(port, info.getMacAddress(), buildBasePhysicalScreen());
+            Master master = new Master(port, info.getMacAddress(), ScreenUtilitiesService.buildBasePhysicalScreen());
         } else {
-            slave = new Slave();
+            Slave slave = new Slave();
 
             slave.addListener("views changes", new Slave.Listener() {
                 @Override
@@ -277,7 +304,6 @@ public class FullscreenActivity extends Activity {
     }
 
     void testTimer() {
-
         final SyncTimer s = new SyncTimer();
         s.startAt(System.currentTimeMillis() + 1000);
         mDrawerView.addDrawer(new DrawingView.Drawer() {
@@ -292,7 +318,7 @@ public class FullscreenActivity extends Activity {
     @Override
     protected void onStop() {
         super.onStop();
-        if (master != null) {
+        /*if (master != null) {
             try {
                 master.stop();
             } catch (IOException e) {
@@ -303,7 +329,7 @@ public class FullscreenActivity extends Activity {
         }
         if (slave != null) {
             slave.close();
-        }
+        }*/
     }
 }
 

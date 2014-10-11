@@ -55,14 +55,16 @@ public class ConnexionListener implements Runnable {
             int height = bheight[0] + bheight[1] << 8;
             // TODO direction
 
-            synchronized (MasterProxy.getMaster()) {
-                PhysicalScreen screen = MasterProxy.getMaster().getScreen(strOldDeviceIdentifier);
-                if (screen == null) {
-                    return;
+            synchronized (FullscreenActivity.getInstance().getMaster()) {
+                if (FullscreenActivity.getInstance().getMaster() != null) {
+                    PhysicalScreen screen = FullscreenActivity.getInstance().getMaster().getScreen(strOldDeviceIdentifier);
+                    if (screen == null) {
+                        return;
+                    }
+                    int x = dx + screen.getX1();
+                    int y = dy + screen.getY1();
+                    FullscreenActivity.getInstance().getMaster().addSlaveScreen(strNewDeviceIdentifier, new PhysicalScreen(x, y, x + width, y + height));
                 }
-                int x = dx + screen.getX1();
-                int y = dy + screen.getY1();
-                MasterProxy.getMaster().addSlaveScreen(strNewDeviceIdentifier, new PhysicalScreen(x, y, x + width, y + height));
             }
         }
     }

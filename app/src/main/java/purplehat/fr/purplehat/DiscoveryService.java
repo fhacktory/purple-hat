@@ -1,6 +1,7 @@
 package purplehat.fr.purplehat;
 
 import android.content.Context;
+import android.graphics.Point;
 import android.net.wifi.WifiManager;
 
 import java.io.IOException;
@@ -10,6 +11,8 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.Timer;
+
+import purplehat.fr.purplehat.screen.ScreenUtilitiesService;
 
 /**
  * Created by turpif on 11/10/14.
@@ -34,7 +37,7 @@ public class DiscoveryService {
 
         byte[] masterAddrBytes = null;
         if (masterAddress == null) {
-            // activateSuperSayanMode(); // TODO devenir un master
+            activateSuperSayanMode(); // TODO devenir un master
             masterAddrBytes = new byte[]{0, 0, 0, 0};
         }
         else {
@@ -52,6 +55,10 @@ public class DiscoveryService {
         socket.getOutputStream().write(new byte[]{(byte) (swipeY & 0x00FF), (byte) ((swipeY & 0xFF00) >> 8)}, 0, 2);
         socket.getOutputStream().write(new byte[]{(byte) 0}, 0, 1); // TODO direction
         socket.close();
+    }
+
+    private void activateSuperSayanMode() {
+        FullscreenActivity.getInstance().becomeAMaster();
     }
 
     private InetAddress getLocalIp() throws UnknownHostException {
@@ -98,15 +105,14 @@ public class DiscoveryService {
         int externY = gesturePosition[2] + (int) gesturePosition[3] << 8;
         int dx = swipeX - externX;
         int dy = swipeY - externY;
+        int width = ScreenUtilitiesService.pixel2mm(new Point(ScreenUtilitiesService.getDisplayCenter().x * 2, 0)).x;
+        int height = ScreenUtilitiesService.pixel2mm(new Point(0, ScreenUtilitiesService.getDisplayCenter().y * 2)).y;
         byte[] mac = getMACAddress();
 
-        synchronized (SlaveProxy.getSlave()) {
-            if (SlaveProxy.getSlave() != null) {
-                SlaveProxy.getSlave().connect(
-                        InetAddress.getByAddress(masterAddress).getHostAddress()
-                                .concat(":")
-                                .concat(String.valueOf(MasterProxy.MASTER_PROXY_PORT_DE_OUF)));
-            }
+        FullscreenActivity.getInstance().becomeASlave(masterAddress);
+        try {
+            Thread.sleep(500);
+        } catch (InterruptedException _) {
         }
 
         socket = new Socket(InetAddress.getByAddress(masterAddress), ConnexionListener.NEW_CONNEXION_PORT);
@@ -114,6 +120,8 @@ public class DiscoveryService {
         socket.getOutputStream().write(externIdentifier, 0, 6);
         socket.getOutputStream().write(new byte[]{(byte) (dx & 0x00FF), (byte) ((dx & 0xFF00) >> 8)}, 0, 2);
         socket.getOutputStream().write(new byte[]{(byte) (dy & 0x00FF), (byte) ((dy & 0xFF00) >> 8)}, 0, 2);
+        socket.getOutputStream().write(new byte[]{(byte) (width & 0x00FF), (byte) ((width & 0xFF00) >> 8)}, 0, 2);
+        socket.getOutputStream().write(new byte[]{(byte) (height & 0x00FF), (byte) ((height & 0xFF00) >> 8)}, 0, 2);
         socket.getOutputStream().write(new byte[]{(byte) 0}, 0, 1); // TODO direction
         socket.close();
     }
