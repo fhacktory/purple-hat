@@ -15,6 +15,7 @@ import android.view.View;
 import purplehat.fr.purplehat.util.SystemUiHider;
 import purplehat.fr.purplehat.view.DrawingView;
 import java.io.IOException;
+import java.net.InetAddress;
 
 /**
  * An example full-screen activity that shows and hides the system UI (i.e.
@@ -121,6 +122,52 @@ public class FullscreenActivity extends Activity {
             }
         });
 
+        // testReadBroadcastedPackets();
+        testDiscoveryAskConnexion();
+        // testDiscoveryWaitConnexion();
+    }
+
+    public void testDiscoveryWaitConnexion() {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                Context context = getApplicationContext();
+                DiscoveryService discoveryService = null;
+                try {
+                    discoveryService = new DiscoveryService(context);
+                } catch (IOException e) {
+                    return;
+                }
+
+                InetAddress masterAddress = null;
+                try {
+                    discoveryService.waitConnexion(masterAddress, 42, 1337);
+                } catch (IOException e) {
+                    return;
+                }
+            }
+        }).start();
+    }
+
+    public void testDiscoveryAskConnexion() {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                Context context = getApplicationContext();
+                DiscoveryService discoveryService = null;
+                try {
+                    discoveryService = new DiscoveryService(context);
+                } catch (IOException e) {
+                    return;
+                }
+
+                try {
+                    discoveryService.askConnexion(42, 1337);
+                } catch (IOException e) {
+                    return;
+                }
+            }
+        }).start();
     }
 
     public void testTheMasterMagic(boolean iAmTheMaster) {
@@ -138,7 +185,6 @@ public class FullscreenActivity extends Activity {
     }
 
     public void testReadBroadcastedPackets() {
-        // Test : read broadcasted packets
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -166,7 +212,6 @@ public class FullscreenActivity extends Activity {
     }
 
     public void testWriteBroadcastedPackets() {
-        // Test : write broadcasted packets
         new Thread(new Runnable() {
             @Override
             public void run() {

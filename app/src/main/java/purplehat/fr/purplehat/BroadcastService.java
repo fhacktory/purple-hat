@@ -62,4 +62,15 @@ public class BroadcastService {
         socket.receive(packet);
         return packet.getData();
     }
+
+    public byte[] receive(int length, byte[] sender) throws IOException {
+        byte[] buf = new byte[1024];
+        DatagramPacket packet = new DatagramPacket(buf, length);
+        socket.receive(packet);
+        byte[] from = packet.getAddress().getAddress();
+        for (int i = 0; i < from.length; i++) {
+            sender[i] = from[i];
+        }
+        return packet.getData();
+    }
 }
