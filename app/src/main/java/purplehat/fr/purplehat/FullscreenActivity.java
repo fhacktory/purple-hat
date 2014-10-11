@@ -132,6 +132,8 @@ public class FullscreenActivity extends Activity {
 
         mDrawerView.setOnTouchListener(new OnBackgroundTouchedListener());
 
+        testTimer();
+
         //testTheMasterMagic(true);
     }
 
@@ -213,6 +215,18 @@ public class FullscreenActivity extends Activity {
                 }
             }
         }).start();
+    }
+
+    void testTimer() {
+
+        final SyncTimer s = new SyncTimer();
+        s.startAt(System.currentTimeMillis() + 1000);
+        mDrawerView.addDrawer(new DrawingView.Drawer() {
+            @Override
+            public void draw(Canvas canvas) {
+                canvas.drawText("TIME : "+ s.getRelativeTime(), 100, 100, new Paint(Color.RED));
+            }
+        });
     }
 
 
