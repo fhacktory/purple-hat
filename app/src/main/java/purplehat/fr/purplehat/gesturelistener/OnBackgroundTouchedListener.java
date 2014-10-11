@@ -16,6 +16,7 @@ public class OnBackgroundTouchedListener implements View.OnTouchListener {
     private static final String TAG = "BackgroundTouched";
 
     private static final int MIN_TOUCH_DISTANCE_DIRECTION = 10;
+    private static final int SCREEN_IO_MARGIN = 30;
 
     public enum Direction {
         UP_DOWN,
@@ -24,8 +25,15 @@ public class OnBackgroundTouchedListener implements View.OnTouchListener {
         RIGHT_LEFT
     }
 
+    public enum IO {
+        IN,
+        OUT,
+        NONE,
+    }
+
     PointF origin;
     Direction direction;
+    IO inorout = IO.NONE;
     float lineWidth = 80;
 
     public boolean onTouch(View v, MotionEvent motionEvent) {
@@ -35,13 +43,14 @@ public class OnBackgroundTouchedListener implements View.OnTouchListener {
             case MotionEvent.ACTION_DOWN :
                 //TODO getTimer time
                 origin = new PointF(0,0);
-
+                inorout = IO.NONE;
                 origin.set(motionEvent.getRawX(), motionEvent.getRawY());
                 return true;
             case MotionEvent.ACTION_MOVE :
                 return handleMove(surfaceView, motionEvent);
             case MotionEvent.ACTION_UP:
-                //thread.doClearMoveData();
+                handleUp(surfaceView,  motionEvent);
+                Log.d(TAG, "IN or OUT ? " + inorout.name());
                 return true;
         }
         return false;
@@ -75,6 +84,34 @@ public class OnBackgroundTouchedListener implements View.OnTouchListener {
 
         Log.d(TAG, "Direction " + ((direction != null) ? direction.name() : ""));
         return false;
+    }
+
+    public void handleUp(DrawingView v, MotionEvent event) {
+        Point center = ScreenUtilitiesService.getDisplayCenter();
+        final float x, y;
+        x = event.getRawX();
+        y = event.getRawY();
+        if(direction == Direction.LEFT_RIGHT && x > ScreenUtilitiesService.getWidth() - SCREEN_IO_MARGIN) {
+            inorout = IO.OUT;
+        } else if(direction == Direction.RIGHT_LEFT && x < SCREEN_IO_MARGIN) {
+            inorout = IO.OUT;
+        } else if(direction == Direction.UP_DOWN && y > ScreenUtilitiesService.getHeight() - SCREEN_IO_MARGIN) {
+            inorout = IO.OUT;
+        } else if(direction == Direction.DOWN_UP && y < SCREEN_IO_MARGIN) {
+            inorout = IO.OUT;
+        } else if(direction == Direction.LEFT_RIGHT
+            && Math.abs(x - ScreenUtilitiesService.getDisplayCenter().y) <  SCREEN_IO_MARGIN) {
+            inorout = IO.IN;
+        } else if(direction == Direction.RIGHT_LEFT
+                && Math.abs(x - ScreenUtilitiesService.getDisplayCenter().x) <  SCREEN_IO_MARGIN) {
+            inorout = IO.IN;
+        } else if(direction == Direction.UP_DOWN
+                && Math.abs(y - ScreenUtilitiesService.getDisplayCenter().y) <  SCREEN_IO_MARGIN) {
+            inorout = IO.IN;
+        } else if(direction == Direction.DOWN_UP
+                && Math.abs(y - ScreenUtilitiesService.getDisplayCenter().y) <  SCREEN_IO_MARGIN) {
+            inorout = IO.IN;
+        }
     }
 
 }

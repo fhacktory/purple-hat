@@ -6,6 +6,8 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.PointF;
+import android.graphics.Rect;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
@@ -17,13 +19,15 @@ import android.view.WindowManager;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.net.InetAddress;
+import java.util.ArrayList;
+import java.util.Random;
 
-import purplehat.fr.purplehat.game.Ball;
+import purplehat.fr.purplehat.Geometrics.PolygonUtill;
 import purplehat.fr.purplehat.game.World;
 import purplehat.fr.purplehat.gesturelistener.OnBackgroundTouchedListener;
 import purplehat.fr.purplehat.util.SystemUiHider;
 import purplehat.fr.purplehat.view.DrawingView;
-import java.net.InetAddress;
 
 /**
  * An example full-screen activity that shows and hides the system UI (i.e.
@@ -122,20 +126,21 @@ public class FullscreenActivity extends Activity {
 */
 
         mDrawerView = (DrawingView) findViewById(R.id.fullscreen_content);
-        mDrawerView.addDrawer(new DrawingView.Drawer() {
-            @Override
-            public void draw(Canvas canvas) {
-                Paint paint = new Paint();
-                paint.setColor(Color.YELLOW);
-                for (Ball ball : world.getBalls()) {
-                    canvas.drawCircle(ball.getPosition().getX(), ball.getPosition().getY(), ball.getRadius(), paint);
-                }
-            }
-        });
+//        mDrawerView.addDrawer(new DrawingView.Drawer() {
+//            @Override
+//            public void draw(Canvas canvas) {
+//                Paint paint = new Paint();
+//                paint.setColor(Color.YELLOW);
+//                for (Ball ball : world.getBalls()) {
+//                    canvas.drawCircle(ball.getPosition().getX(), ball.getPosition().getY(), ball.getRadius(), paint);
+//                }
+//            }
+//        });
 
         mDrawerView.setOnTouchListener(new OnBackgroundTouchedListener());
 
         testTimer();
+        testRect();
 
         //testTheMasterMagic(true);
 
@@ -222,6 +227,8 @@ public class FullscreenActivity extends Activity {
         }
     }
 
+
+
     public void testReadBroadcastedPackets() {
         new Thread(new Runnable() {
             @Override
@@ -282,6 +289,50 @@ public class FullscreenActivity extends Activity {
             @Override
             public void draw(Canvas canvas) {
                 canvas.drawText("TIME : "+ s.getRelativeTime(), 100, 100, new Paint(Color.RED));
+            }
+        });
+    }
+
+    void testRect() {
+        final ArrayList<Rect> list = new ArrayList<Rect>();
+        list.add(new Rect(10, 100, 500, 200));
+        list.add(new Rect(10, 200, 500, 300));
+        list.add(new Rect(10, 300, 500, 400));
+        list.add(new Rect(10, 400, 500, 500));
+        list.add(new Rect(10, 500, 500, 600));
+
+        final PointF[] ps = PolygonUtill.borderOfRectangleUnion(list.toArray(new Rect[list.size()]));
+        Random rand = new Random();
+        final ArrayList<Integer> color = new ArrayList<Integer>();
+        color.add(Color.argb(255, rand.nextInt(255), rand.nextInt(255), rand.nextInt(255)));
+        color.add(Color.argb(255, rand.nextInt(255), rand.nextInt(255), rand.nextInt(255)));
+        color.add(Color.argb(255, rand.nextInt(255), rand.nextInt(255), rand.nextInt(255)));
+        color.add(Color.argb(255, rand.nextInt(255), rand.nextInt(255), rand.nextInt(255)));
+        color.add(Color.argb(255, rand.nextInt(255), rand.nextInt(255), rand.nextInt(255)));
+        color.add(Color.argb(255, rand.nextInt(255), rand.nextInt(255), rand.nextInt(255)));
+        color.add(Color.argb(255, rand.nextInt(255), rand.nextInt(255), rand.nextInt(255)));
+        color.add(Color.argb(255, rand.nextInt(255), rand.nextInt(255), rand.nextInt(255)));
+        mDrawerView.addDrawer(new DrawingView.Drawer() {
+
+
+            @Override
+            public void draw(Canvas canvas) {
+                Paint p = new Paint();
+                for (int i = 0; i < list.size(); i++) {
+                    p.setColor(color.get(i));
+                    canvas.drawRect(list.get(i),p );
+                }
+            }
+        });
+
+        mDrawerView.addDrawer(new DrawingView.Drawer() {
+            @Override
+            public void draw(Canvas canvas) {
+                Paint paint = new Paint(Color.BLACK);
+                paint.setStrokeWidth(20f);
+                for(int i =0 ; i < ps.length - 1; i++) {
+                    canvas.drawLine(ps[i].x, ps[i].y, ps[i +1 ].x, ps[i+1].y, paint);
+                }
             }
         });
     }
