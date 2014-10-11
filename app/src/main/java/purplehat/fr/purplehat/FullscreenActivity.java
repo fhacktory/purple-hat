@@ -5,9 +5,12 @@ import purplehat.fr.purplehat.util.SystemUiHider;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Context;
+import android.net.wifi.WifiInfo;
+import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
@@ -129,13 +132,26 @@ public class FullscreenActivity extends Activity {
         // testWriteBroadcastedPackets();
     }
 
+    // Magic conversion numbers!
+    public static final double INCHES_TO_MM = 25.4;
+
+    public PhysicalScreen buildBasePhysicalScreen() {
+        DisplayMetrics dm = new DisplayMetrics();
+        getWindowManager().getDefaultDisplay().getMetrics(dm);
+        return new PhysicalScreen(0, 0,
+                (int) (INCHES_TO_MM * dm.widthPixels / dm.xdpi),
+                (int) (INCHES_TO_MM * dm.heightPixels / dm.ydpi));
+    }
+
     public void testTheMasterMagic(boolean iAmTheMaster) {
         int port = 4242;
         String serverHost = "192.168.1.241";
 
         // Setup the master
         if (iAmTheMaster) {
-            masterServer = new Master(port);
+            WifiManager manager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
+            WifiInfo info = manager.getConnectionInfo();
+            masterServer = new Master(port, info.getMacAddress(), buildBasePhysicalScreen());
             masterServer.start();
         } else {
             masterClient = new Slave(serverHost + ":" + port);
