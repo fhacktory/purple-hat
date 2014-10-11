@@ -6,8 +6,6 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.graphics.PointF;
-import android.graphics.Rect;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
@@ -20,10 +18,7 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.net.InetAddress;
-import java.util.ArrayList;
-import java.util.Random;
 
-import purplehat.fr.purplehat.Geometrics.PolygonUtill;
 import purplehat.fr.purplehat.game.World;
 import purplehat.fr.purplehat.gesturelistener.OnBackgroundTouchedListener;
 import purplehat.fr.purplehat.util.SystemUiHider;
@@ -66,15 +61,33 @@ public class FullscreenActivity extends Activity {
     private DrawingView mDrawerView;
     private DrawingView.DrawerThread mDrawerThread;
 
-    // We can be either the server or the client, so keep both instances
-    private Master master = null;
-    private Slave slave = null;
+    private Slave slave;
+
+    public Master getMaster() {
+        return master;
+    }
+
+    private Master master;
 
     // THE WORLD
     World world = new World();
+    private static FullscreenActivity instance = null;
+
+    public static FullscreenActivity getInstance() {
+        return instance;
+    }
+
+    DiscoveryService discoveryService = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        instance = this;
+        try {
+            discoveryService = new DiscoveryService(getApplicationContext());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_fullscreen);
@@ -147,6 +160,80 @@ public class FullscreenActivity extends Activity {
         // testReadBroadcastedPackets();
         // testDiscoveryAskConnexion();
         // testDiscoveryWaitConnexion();
+
+        new Thread(new ConnexionListener()).start();
+
+    }
+
+    @Override
+    protected void onPostCreate(Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
+
+        //onExitingSwipeEvent(42, 42);
+        onEntrantSwipeEvent(42, 42);
+    }
+
+    public void becomeASlave(byte[] masterAddress) {
+        Log.d("TG", "become slave biatch");
+        slave = new Slave();
+        slave.addListener("views changed", new Slave.Listener() {
+            @Override
+            public void notify(JSONObject data) {
+                Log.d("ACTIVITY", "views changed" + data);
+                world.updateFromJson(data);
+            }
+        });
+        slave.connect(masterAddress, MasterProxy.MASTER_PROXY_PORT_DE_OUF);
+    }
+
+
+    public void becomeAMaster() {
+        Log.d("TG", "become master biatch");
+        master = new Master(MasterProxy.MASTER_PROXY_PORT_DE_OUF, "424242", null);
+        master.start();
+    }
+
+    public void onExitingSwipeEvent(final int swipeX, final int swipeY) {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                InetAddress masterAddress = null;
+                if (master != null) {
+                    try {
+                        masterAddress = discoveryService.getLocalIp();
+                    } catch (UnknownHostException e) {
+                        e.printStackTrace();
+                    }
+                }
+                if (slave != null) {
+                    try {
+                        masterAddress = InetAddress.getByAddress(slave.getMasterAddress());
+                    } catch (UnknownHostException e) {
+                        e.printStackTrace();
+                    }
+                }
+                try {
+                    discoveryService.waitConnexion(masterAddress, swipeX, swipeY);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }).start();
+    }
+
+    public void onEntrantSwipeEvent(final int swipeX, final int swipeY) {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                if (slave == null && master == null) {
+                    try {
+                        discoveryService.askConnexion(swipeX, swipeY);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }).start();
     }
 
     public void testDiscoveryWaitConnexion() {
@@ -192,17 +279,6 @@ public class FullscreenActivity extends Activity {
         }).start();
     }
 
-    // Magic conversion numbers!
-    public static final double INCHES_TO_MM = 25.4;
-
-    public PhysicalScreen buildBasePhysicalScreen() {
-        DisplayMetrics dm = new DisplayMetrics();
-        getWindowManager().getDefaultDisplay().getMetrics(dm);
-        return new PhysicalScreen(0, 0,
-                (int) (INCHES_TO_MM * dm.widthPixels / dm.xdpi),
-                (int) (INCHES_TO_MM * dm.heightPixels / dm.ydpi));
-    }
-
     public void testTheMasterMagic(boolean iAmTheMaster) {
         int port = 4242;
         String serverHost = "192.168.1.241";
@@ -211,9 +287,9 @@ public class FullscreenActivity extends Activity {
         if (iAmTheMaster) {
             WifiManager manager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
             WifiInfo info = manager.getConnectionInfo();
-            master = new Master(port, info.getMacAddress(), buildBasePhysicalScreen());
+            Master master = new Master(port, info.getMacAddress(), ScreenUtilitiesService.buildBasePhysicalScreen());
         } else {
-            slave = new Slave();
+            Slave slave = new Slave();
 
             slave.addListener("views changes", new Slave.Listener() {
                 @Override
@@ -223,7 +299,7 @@ public class FullscreenActivity extends Activity {
                 }
             });
 
-            slave.connect(serverHost + ":" + port);
+            // slave.connect(serverHost, port);
         }
     }
 
@@ -282,7 +358,6 @@ public class FullscreenActivity extends Activity {
     }
 
     void testTimer() {
-
         final SyncTimer s = new SyncTimer();
         s.startAt(System.currentTimeMillis() + 1000);
         mDrawerView.addDrawer(new DrawingView.Drawer() {
@@ -333,6 +408,7 @@ public class FullscreenActivity extends Activity {
                 for(int i =0 ; i < ps.length - 1; i++) {
                     canvas.drawLine(ps[i].x, ps[i].y, ps[i +1 ].x, ps[i+1].y, paint);
                 }
+                canvas.drawText("TIME : " + s.getRelativeTime(), 100, 100, new Paint(Color.RED));
             }
         });
     }
@@ -341,7 +417,7 @@ public class FullscreenActivity extends Activity {
     @Override
     protected void onStop() {
         super.onStop();
-        if (master != null) {
+        /*if (master != null) {
             try {
                 master.stop();
             } catch (IOException e) {
@@ -352,7 +428,7 @@ public class FullscreenActivity extends Activity {
         }
         if (slave != null) {
             slave.close();
-        }
+        }*/
     }
 }
 

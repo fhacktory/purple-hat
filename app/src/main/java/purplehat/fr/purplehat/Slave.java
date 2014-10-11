@@ -7,7 +7,9 @@ import org.java_websocket.handshake.ServerHandshake;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.net.InetAddress;
 import java.net.URI;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -26,6 +28,12 @@ public class Slave {
     private WebSocketClient client;
     private Map<String, Collection<Listener>> allListeners;
 
+    public byte[] getMasterAddress() {
+        return masterAddress;
+    }
+
+    private byte[] masterAddress = null;
+
     public Slave() {
         allListeners = new HashMap<String, Collection<Listener>>();
     }
@@ -43,7 +51,16 @@ public class Slave {
         return client != null && client.getConnection().isOpen();
     }
 
-    public void connect(String address) {
+    public void connect(byte[] inetAddress, int port) {
+        masterAddress = inetAddress;
+        String address = null;
+        try {
+            address = InetAddress.getByAddress(inetAddress).getHostAddress()
+                    .concat(":")
+                    .concat(String.valueOf(port));
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+        }
         URI uri = URI.create("ws://" + address);
         client = new WebSocketClient(uri) {
             @Override
@@ -77,6 +94,7 @@ public class Slave {
             public void onError(Exception ex) {
             }
         };
+        client.connect();
     }
 
     // TODO handle when not connected

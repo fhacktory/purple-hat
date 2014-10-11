@@ -1,6 +1,7 @@
 package purplehat.fr.purplehat;
 
 import android.content.Context;
+import android.graphics.Point;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.util.Log;
@@ -18,6 +19,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+import purplehat.fr.purplehat.screen.ScreenUtilitiesService;
+
 /**
  * Created by jmcomets on 11/10/14.
  */
@@ -25,11 +28,29 @@ public class Master {
     private static final String LOG_TAG = "MASTER_CLIENT";
 
     private PhysicalScreen baseScreen;
+    private String screenId;
+
+    public PhysicalScreen getScreen(String id) {
+        return screenMap.get(id);
+    }
+
     private Map<String, PhysicalScreen> screenMap;
     private WebSocketServer server;
 
+    public void start() {
+        Log.d(LOG_TAG, "master websocket server started");
+        server.start();
+    }
+
     public Master(int port, String screenId, PhysicalScreen baseScreen) {
+        if (baseScreen == null) {
+            baseScreen = new PhysicalScreen(0, 0, 0, 0);
+            Point p = ScreenUtilitiesService.pixel2mm(ScreenUtilitiesService.getDisplayCenter());
+            baseScreen.setX2(p.x * 2);
+            baseScreen.setY2(p.y * 2);
+        }
         this.baseScreen = baseScreen;
+        this.screenId = screenId;
         screenMap = new HashMap<String, PhysicalScreen>();
         screenMap.put(screenId, baseScreen);
         server = new WebSocketServer(new InetSocketAddress(port)) {
@@ -55,6 +76,7 @@ public class Master {
     }
 
     public void addSlaveScreen(String screenId, PhysicalScreen slaveScreen) {
+        Log.d(LOG_TAG, "Nombre de client : " + String.valueOf(screenMap.size()));
         screenMap.put(screenId, slaveScreen);
         broadcastWorld();
     }
@@ -62,7 +84,7 @@ public class Master {
     public void broadcastWorld() {
         try {
             JSONObject data = new JSONObject();
-            data.put("action", "view changed");
+            data.put("action", "views changed");
             JSONArray screenList = new JSONArray();
             for (PhysicalScreen screen : screenMap.values()) {
                 JSONObject screenData = new JSONObject();
@@ -102,5 +124,9 @@ public class Master {
 
     public void stop() throws IOException, InterruptedException {
         server.stop();
+    }
+
+    public String getScreenId() {
+        return screenId;
     }
 }
