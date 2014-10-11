@@ -14,12 +14,19 @@ import java.net.InetAddress;
  */
 public class BroadcastService {
     private Context context;
+    private InetAddress broadcastAddress;
+    private DatagramSocket socket;
+    private int port;
 
-    public BroadcastService(Context context) {
+    public BroadcastService(Context context, int port) throws IOException {
         this.context = context;
+        this.port = port;
+        this.broadcastAddress = getBroadcastAddress();
+        this.socket = new DatagramSocket(this.port);
+        this.socket.setBroadcast(true);
     }
 
-    public InetAddress getBroadcastAddress() throws IOException {
+    private InetAddress getBroadcastAddress() throws IOException {
         WifiManager wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
         DhcpInfo dhcpInfo = wifiManager.getDhcpInfo();
         if (dhcpInfo == null) {
@@ -35,22 +42,15 @@ public class BroadcastService {
         return InetAddress.getByAddress(quads);
     }
 
-    public void send(byte[] bytes, int length, int port) throws IOException {
-        DatagramSocket datagramSocket = new DatagramSocket(port);
-        datagramSocket.setBroadcast(true);
-
-        InetAddress address = getBroadcastAddress();
-        DatagramPacket datagramPacket = new DatagramPacket(bytes, length, address, port);
-        datagramSocket.send(datagramPacket);
+    public void send(byte[] bytes, int length) throws IOException {
+        DatagramPacket datagramPacket = new DatagramPacket(bytes, length, broadcastAddress, port);
+        socket.send(datagramPacket);
     }
 
-    public byte[] receive(int length, int port) throws IOException {
+    public byte[] receive(int length) throws IOException {
         byte[] buf = new byte[1024];
-        DatagramSocket datagramSocket = new DatagramSocket(port);
-        datagramSocket.setBroadcast(true);
-
         DatagramPacket packet = new DatagramPacket(buf, length);
-        datagramSocket.receive(packet);
+        socket.receive(packet);
         return packet.getData();
     }
 }

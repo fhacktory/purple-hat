@@ -4,11 +4,15 @@ import purplehat.fr.purplehat.util.SystemUiHider;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
+import android.content.Context;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
+
+import java.io.IOException;
 
 
 /**
@@ -113,6 +117,63 @@ public class FullscreenActivity extends Activity {
         // operations to prevent the jarring behavior of controls going away
         // while interacting with the UI.
         findViewById(R.id.dummy_button).setOnTouchListener(mDelayHideTouchListener);
+
+        // testReadBroadcastedPackets();
+        // testWriteBroadcastedPackets();
+    }
+
+    public void testReadBroadcastedPackets() {
+        // Test : read broadcasted packets
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                Context context = getApplicationContext();
+                int port = 4242;
+                BroadcastService broadcastService = null;
+                try {
+                    broadcastService = new BroadcastService(context, port);
+                } catch (IOException _) {
+                    return;
+                }
+
+                // byte[] data = {42, 13, 37, 6, 66};
+                while (true) {
+                    try {
+                        //broadcastService.send(data, data.length);
+                        byte[] data = broadcastService.receive(5);
+                        Log.d(data.toString(), "coucou");
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }).start();
+    }
+
+    public void testWriteBroadcastedPackets() {
+        // Test : write broadcasted packets
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                Context context = getApplicationContext();
+                int port = 4242;
+                BroadcastService broadcastService = null;
+                try {
+                    broadcastService = new BroadcastService(context, port);
+                } catch (IOException _) {
+                    return;
+                }
+
+                byte[] data = {42, 13, 37, 6, 66};
+                while (true) {
+                    try {
+                        broadcastService.send(data, data.length);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }).start();
     }
 
     @Override
