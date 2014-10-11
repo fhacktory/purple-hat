@@ -51,8 +51,8 @@ public class FullscreenActivity extends Activity {
     private SystemUiHider mSystemUiHider;
 
     // We can be either the server or the client, so keep both instances
-    private MasterServer masterServer = null;
-    private MasterClient masterClient = null;
+    private Master masterServer = null;
+    private Slave masterClient = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -135,10 +135,10 @@ public class FullscreenActivity extends Activity {
 
         // Setup the master
         if (iAmTheMaster) {
-            masterServer = new MasterServer(port);
+            masterServer = new Master(port);
             masterServer.start();
         } else {
-            masterClient = new MasterClient(serverHost + ":" + port);
+            masterClient = new Slave(serverHost + ":" + port);
             masterClient.connect();
         }
     }

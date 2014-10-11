@@ -14,10 +14,10 @@ import java.util.Collection;
 /**
  * Created by jmcomets on 11/10/14.
  */
-public class MasterServer extends WebSocketServer {
+public class Master extends WebSocketServer {
     private static final String LOG_TAG = "MASTER_CLIENT";
 
-    public MasterServer(int port) {
+    public Master(int port) {
         super(new InetSocketAddress(port));
     }
 
@@ -34,15 +34,19 @@ public class MasterServer extends WebSocketServer {
     @Override
     public void onMessage(WebSocket conn, String message) {
         try {
-            JSONObject msg = new JSONObject(message);
-            String action = msg.getString("action");
-            if (action != null) {
-                Log.d(LOG_TAG, "remote '" + conn.getRemoteSocketAddress().getHostName()
-                        + "', action: '" + action + "'");
-
-            }
+            JSONObject obj = new JSONObject(message);
+            onJsonMessage(conn, obj);
         } catch (JSONException e) {
-            Log.e(LOG_TAG, "json message not decoded", e);
+            Log.w(LOG_TAG, "unhandled non-json message");
+        }
+    }
+
+    private void onJsonMessage(WebSocket conn, JSONObject obj) {
+        try {
+            String action = obj.getString("action");
+            Log.d(LOG_TAG, "action received: " + action);
+        } catch (JSONException e) {
+            Log.w(LOG_TAG, "no action given");
         }
     }
 

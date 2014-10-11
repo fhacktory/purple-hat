@@ -12,11 +12,11 @@ import java.net.URI;
 /**
  * Created by jmcomets on 11/10/14.
  */
-public class MasterClient extends WebSocketClient {
+public class Slave extends WebSocketClient {
 
     private static final String LOG_TAG = "MASTER_CLIENT";
 
-    public MasterClient(String address) {
+    public Slave(String address) {
         super(URI.create("ws://" + address));
     }
 
@@ -26,9 +26,8 @@ public class MasterClient extends WebSocketClient {
 
     @Override
     public void onMessage(String message) {
-        JSONObject obj = null;
         try {
-            obj = new JSONObject(message);
+            JSONObject obj = new JSONObject(message);
             onJsonMessage(obj);
         } catch (JSONException e) {
             Log.w(LOG_TAG, "unhandled non-json message");
@@ -38,9 +37,9 @@ public class MasterClient extends WebSocketClient {
     private void onJsonMessage(JSONObject obj) {
         try {
             String action = obj.getString("action");
-            if (action.equals(MasterActions.VIEWS_CHANGED)) {
+            if (action.equals(SlaveActions.VIEWS_CHANGED)) {
                 viewsChanged(obj);
-            } else if (action.equals(MasterActions.HIT_WHITE)) {
+            } else if (action.equals(SlaveActions.HIT_WHITE)) {
                 hitWhite(obj);
             }
         } catch (JSONException e) {
