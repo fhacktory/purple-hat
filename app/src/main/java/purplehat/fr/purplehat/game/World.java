@@ -16,15 +16,13 @@ public class World {
     private static final String LOG_TAG = "WORLD";
 
     private Collection<Ball> balls;
-    private Collection<Rect2<Integer>> rects;
 
     public World() {
         balls = new ArrayList<Ball>();
-        rects = new ArrayList<Rect2<Integer>>();
 
         Ball ball = new Ball();
-        ball.setPosition(new Vector2<Integer>(300, 400));
-        ball.setRadius(200);
+        ball.setPosition(new Vector2<Double>(0.300, 0.400));
+        ball.setRadius(0.200);
         balls.add(ball);
     }
 
@@ -32,26 +30,7 @@ public class World {
         return balls;
     }
 
-    public Collection<Rect2<Integer>> getRects() {
-        return rects;
-    }
-
     public void updateFromJson(JSONObject data) {
-        // Rects
-        try {
-            JSONArray rectList = data.getJSONArray("rects");
-            rects = new ArrayList<Rect2<Integer>>();
-            for (int i = 0; i < rectList.length(); i++) {
-                JSONObject rect = rectList.getJSONObject(i);
-                rects.add(new Rect2<Integer>(
-                        rect.getInt("x1"), rect.getInt("y1"),
-                        rect.getInt("x2"), rect.getInt("y2")
-                ));
-            }
-        } catch (JSONException e) {
-            Log.w(LOG_TAG, "rects is badly formed");
-        }
-
         // Balls
         try {
             JSONArray ballList = data.getJSONArray("balls");
@@ -61,8 +40,8 @@ public class World {
                 Ball ball = new Ball();
                 ball.setRadius(ballData.getInt("radius"));
                 JSONObject ballPosData = ballData.getJSONObject("position");
-                ball.setPosition(new Vector2<Integer>(
-                        ballPosData.getInt("x"), ballPosData.getInt("y")
+                ball.setPosition(new Vector2<Double>(
+                        ballPosData.getDouble("x"), ballPosData.getDouble("y")
                 ));
                 balls.add(ball);
             }

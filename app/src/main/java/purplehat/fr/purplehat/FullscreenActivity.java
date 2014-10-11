@@ -19,6 +19,7 @@ import org.json.JSONObject;
 import java.io.IOException;
 
 import purplehat.fr.purplehat.game.Ball;
+import purplehat.fr.purplehat.game.Rect2;
 import purplehat.fr.purplehat.game.World;
 import purplehat.fr.purplehat.gesturelistener.OnBackgroundTouchedListener;
 import purplehat.fr.purplehat.screen.ScreenUtilitiesService;
@@ -66,6 +67,8 @@ public class FullscreenActivity extends Activity {
 
     private Slave slave;
 
+    private Rect2<Double> viewport;
+
     public Master getMaster() {
         return master;
     }
@@ -90,6 +93,8 @@ public class FullscreenActivity extends Activity {
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        viewport = new Rect2<Double>(0.0, 0.0, 1.0, 1.0);
 
         super.onCreate(savedInstanceState);
 
@@ -148,7 +153,10 @@ public class FullscreenActivity extends Activity {
                 Paint paint = new Paint();
                 paint.setColor(Color.YELLOW);
                 for (Ball ball : world.getBalls()) {
-                    canvas.drawCircle(ball.getPosition().getX(), ball.getPosition().getY(), ball.getRadius(), paint);
+                    canvas.drawCircle(ball.getPosition().getX().floatValue(),
+                            ball.getPosition().getY().floatValue(),
+                            ball.getRadius().floatValue(),
+                            paint);
                 }
             }
         });
@@ -178,13 +186,13 @@ public class FullscreenActivity extends Activity {
     public void becomeASlave(byte[] masterAddress) {
         Log.d("TG", "become slave biatch");
         slave = new Slave();
-        slave.addListener("views changed", new Slave.Listener() {
+        /*slave.addListener("world:virtual:updated", new Slave.Listener() {
             @Override
             public void notify(JSONObject data) {
-                Log.d("ACTIVITY", "views changed" + data);
-                world.updateFromJson(data);
+                Log.d("ACTIVITY", "world:updated" + data);
+                // world.updateFromJson(data);
             }
-        });
+        });*/
         slave.connect(masterAddress, MasterProxy.MASTER_PROXY_PORT_DE_OUF);
     }
 
