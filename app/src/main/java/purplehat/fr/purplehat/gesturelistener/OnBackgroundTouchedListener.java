@@ -47,7 +47,7 @@ public class OnBackgroundTouchedListener implements View.OnTouchListener {
     public interface TouchListener {
         public void onTouchDown(int x, int y);
         public void onTouchUp(int x, int y);
-        public void onTouchMove(int x, int y);
+        public void onTouchMove(int x, int y, Direction direction);
     }
 
     public OnBackgroundTouchedListener(InOrOutListener inOrOutListener) {
@@ -116,7 +116,7 @@ public class OnBackgroundTouchedListener implements View.OnTouchListener {
         Log.d(LOG_TAG, "Direction " + ((direction != null) ? direction.name() : ""));
 
         // Fire touch move
-        touchListener.onTouchMove(x, y);
+        touchListener.onTouchMove(x, y, direction);
 
         return false;
     }
