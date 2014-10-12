@@ -155,7 +155,7 @@ public class FullscreenActivity extends Activity {
                     return;
 
                 final float dt = 0.030f;
-                synchronized (world) {
+                synchronized (world.getBalls()) {
                     for (Ball ball : world.getBalls()) {
                         double oldX = ball.getPosition().getX();
                         double oldY = ball.getPosition().getY();
@@ -285,18 +285,14 @@ public class FullscreenActivity extends Activity {
         }
         Paint paint = new Paint();
         paint.setColor(Color.RED);
-        synchronized (viewportOffset) {
-            synchronized (world) {
-                synchronized (world.getBalls()) {
-                    for (Ball ball : world.getBalls()) {
-                        Point p = ScreenUtilitiesService.mm2pixel(ball.getPosition(), viewportOffset);
-                        if (purpleHatBmp == null) {
-                            canvas.drawCircle(p.x, p.y, ScreenUtilitiesService.mm2pixel(ball.getRadius().floatValue()), paint);
-                        } else {
-                            canvas.drawBitmap(purpleHatBmp, p.x - (purpleHatBmp.getWidth() / 2),
-                                    p.y - (purpleHatBmp.getHeight() / 2), paint);
-                        }
-                    }
+        synchronized (world.getBalls()) {
+            for (Ball ball : world.getBalls()) {
+                Point p = ScreenUtilitiesService.mm2pixel(ball.getPosition(), viewportOffset);
+                if (purpleHatBmp == null) {
+                    canvas.drawCircle(p.x, p.y, ScreenUtilitiesService.mm2pixel(ball.getRadius().floatValue()), paint);
+                } else {
+                    canvas.drawBitmap(purpleHatBmp, p.x - (purpleHatBmp.getWidth() / 2),
+                            p.y - (purpleHatBmp.getHeight() / 2), paint);
                 }
             }
         }
@@ -397,7 +393,7 @@ public class FullscreenActivity extends Activity {
             public void notify(JSONObject data) {
                 try {
                     JSONArray balls = data.getJSONArray("balls");
-                    synchronized (world) {
+                    synchronized (world.getBalls()) {
                         world.getBalls().clear();
                         for (int i = 0; i < balls.length(); i++) {
                             JSONObject ballData = balls.getJSONObject(i);
@@ -436,7 +432,9 @@ public class FullscreenActivity extends Activity {
     }
 
     public void addBallInWorld(Ball ball) {
-        world.getBalls().add(ball);
+        synchronized (world.getBalls()) {
+            world.getBalls().add(ball);
+        }
     }
 
     public void onExitingSwipeEvent(final int swipeX, final int swipeY) {
