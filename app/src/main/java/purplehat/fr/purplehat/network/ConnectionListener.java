@@ -28,8 +28,8 @@ public class ConnectionListener implements Runnable {
 
         @Override
         public void run() {
-            byte[] newDeviceIdentifier = new byte[6];
-            byte[] oldDeviceIdentifier = new byte[6];
+            byte[] newDeviceIdentifier = new byte[2];
+            byte[] oldDeviceIdentifier = new byte[2];
             byte[] bdx = new byte[2];
             byte[] bdy = new byte[2];
             byte[] bwidth = new byte[2];
@@ -37,13 +37,14 @@ public class ConnectionListener implements Runnable {
             byte[] bdirection = new byte[1];
 
             try {
-                socket.getInputStream().read(newDeviceIdentifier, 0, 6);
-                socket.getInputStream().read(oldDeviceIdentifier, 0, 6);
+                socket.getInputStream().read(newDeviceIdentifier, 0, 2);
+                socket.getInputStream().read(oldDeviceIdentifier, 0, 2);
                 socket.getInputStream().read(bdx, 0, 2);
                 socket.getInputStream().read(bdy, 0, 2);
                 socket.getInputStream().read(bwidth, 0, 2);
                 socket.getInputStream().read(bheight, 0, 2);
                 socket.getInputStream().read(bdirection, 0, 1);
+                socket.close();
             } catch (IOException e) {
                 return;
             }
@@ -63,12 +64,13 @@ public class ConnectionListener implements Runnable {
                         PhysicalScreen screen = master.getScreen(strOldDeviceIdentifier);
                         if (screen == null) {
                             Log.d(LOG_TAG, "screen is null for id " + strOldDeviceIdentifier);
-                            Log.d(LOG_TAG, "Available IDs are:");
-                            for (String id : master.getScreenMap().keySet()) {
-                                Log.d(LOG_TAG, id);
-                            }
                             return;
                         }
+                        Log.d(LOG_TAG, "Available IDs are:");
+                        for (String id : master.getScreenMap().keySet()) {
+                            Log.d(LOG_TAG, id);
+                        }
+                        Log.d(LOG_TAG, "Nouveau : " + strNewDeviceIdentifier);
                         double x = -dx + screen.getX1();
                         double y = -dy + screen.getY1();
                         master.addSlaveScreen(strNewDeviceIdentifier, new PhysicalScreen(x, y, x + width, y + height));

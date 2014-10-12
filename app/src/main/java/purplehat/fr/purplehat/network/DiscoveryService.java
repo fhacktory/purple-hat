@@ -63,7 +63,7 @@ public class DiscoveryService {
         short sswipeY = (short) swipeY;
         Socket socket = new Socket(address, DISCOVERY_HANDSHAKE_PORT);
         socket.getOutputStream().write(masterAddrBytes, 0, 4);
-        socket.getOutputStream().write(mac, 0, 6);
+        socket.getOutputStream().write(mac, 0, 2);
         socket.getOutputStream().write(new byte[]{(byte) (sswipeX & 0x00FF), (byte) ((sswipeX & 0xFF00) >> 8)}, 0, 2);
         socket.getOutputStream().write(new byte[]{(byte) (sswipeY & 0x00FF), (byte) ((sswipeY & 0xFF00) >> 8)}, 0, 2);
         socket.getOutputStream().write(new byte[]{(byte) 0}, 0, 1); // TODO direction
@@ -90,12 +90,12 @@ public class DiscoveryService {
         Socket socket = serverSocket.accept();
 
         byte[] masterAddress = new byte[4];
-        byte[] externIdentifier = new byte[6];
+        byte[] externIdentifier = new byte[2];
         byte[] gesturePositionX = new byte[2];
         byte[] gesturePositionY = new byte[2];
         byte[] gestureDirection = new byte[1];
         socket.getInputStream().read(masterAddress, 0, 4);
-        socket.getInputStream().read(externIdentifier, 0, 6);
+        socket.getInputStream().read(externIdentifier, 0, 2);
         socket.getInputStream().read(gesturePositionX, 0, 2);
         socket.getInputStream().read(gesturePositionY, 0, 2);
         socket.getInputStream().read(gestureDirection, 0, 1);
@@ -113,8 +113,8 @@ public class DiscoveryService {
         Log.d(LOG_TAG, "Receive info from " + new String(externIdentifier) + " : dx=" + dx + ", dy=" + dy);
 
         socket = new Socket(InetAddress.getByAddress(masterAddress), ConnectionListener.NEW_CONNEXION_PORT);
-        socket.getOutputStream().write(mac, 0, 6);
-        socket.getOutputStream().write(externIdentifier, 0, 6);
+        socket.getOutputStream().write(mac, 0, 2);
+        socket.getOutputStream().write(externIdentifier, 0, 2);
         socket.getOutputStream().write(new byte[]{(byte) (dx & 0x00FF), (byte) ((dx & 0xFF00) >> 8)}, 0, 2);
         socket.getOutputStream().write(new byte[]{(byte) (dy & 0x00FF), (byte) ((dy & 0xFF00) >> 8)}, 0, 2);
         socket.getOutputStream().write(new byte[]{(byte) (width & 0x00FF), (byte) ((width & 0xFF00) >> 8)}, 0, 2);
@@ -136,11 +136,11 @@ public class DiscoveryService {
         // HAAAAACK
         return new byte[] {
                 (byte) (Math.random() * 255),
-                (byte) (Math.random() * 255),
-                (byte) (Math.random() * 255),
-                (byte) (Math.random() * 255),
-                (byte) (Math.random() * 255),
-                (byte) (Math.random() * 255)
+                (byte) (Math.random() * 255)/*,
+                (byte) (Math.random() * 255 * 0),
+                (byte) (Math.random() * 255 * 0),
+                (byte) (Math.random() * 255 * 0),
+                (byte) (Math.random() * 255 * 0)*/
         };
     }
 

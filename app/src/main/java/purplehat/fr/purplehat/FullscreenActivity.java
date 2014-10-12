@@ -37,7 +37,7 @@ import purplehat.fr.purplehat.view.DrawingView;
 
 public class FullscreenActivity extends Activity {
     private static final int MASTER_PORT = 1618;
-    private static final String MASTER_ID = "424242";
+    private static final String MASTER_ID = "42";
     private Slave slave;
 
     private Vector2<Double> viewportOffset;
