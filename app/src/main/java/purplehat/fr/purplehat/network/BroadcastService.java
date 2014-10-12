@@ -40,7 +40,7 @@ public class BroadcastService {
         WifiManager wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
         DhcpInfo dhcpInfo = wifiManager.getDhcpInfo();
         if (dhcpInfo == null) {
-            throw new IOException("Pas de DHCP trouvé");
+            throw new IOException("no dhcp found");
         }
 
         int broadcast = (dhcpInfo.ipAddress & dhcpInfo.netmask) | ~dhcpInfo.netmask;

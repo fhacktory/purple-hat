@@ -24,7 +24,7 @@ import purplehat.fr.purplehat.utils.ScreenUtilitiesService;
  * Created by jmcomets on 11/10/14.
  */
 public class Master {
-    private static final String LOG_TAG = "MASTER_CLIENT";
+    private static final String LOG_TAG = "MASTER";
 
     private PhysicalScreen baseScreen;
     private String screenId;

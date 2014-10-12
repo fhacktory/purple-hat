@@ -19,7 +19,7 @@ import java.util.Collections;
  */
 public class DrawingView extends SurfaceView implements SurfaceHolder.Callback {
 
-    public static final String TAG = "DrawingView";
+    public static final String LOG_TAG = "DRAWING_VIEW";
 
     public interface Drawer {
         public void draw(Canvas canvas);
@@ -29,26 +29,8 @@ public class DrawingView extends SurfaceView implements SurfaceHolder.Callback {
 
     public class DrawerThread extends Thread {
         private final SurfaceHolder mSurfaceHolder;
-        private final Handler mHandler;
-        private final Context mContext;
-
 
         boolean mRun = false;
-
-        /**
-         * Current height of the surface/canvas.
-         *
-         * @see #setSurfaceSize
-         */
-        private int mCanvasHeight = 1;
-
-        /**
-         * Current width of the surface/canvas.
-         *
-         * @see #setSurfaceSize
-         */
-        private int mCanvasWidth = 1;
-
 
         /**
          * Used to signal the thread whether it should be running or not.
@@ -62,22 +44,8 @@ public class DrawingView extends SurfaceView implements SurfaceHolder.Callback {
             mRun = b;
         }
 
-        /* Callback invoked when the surface dimensions change. */
-        public void setSurfaceSize(int width, int height) {
-            // synchronized to make sure these all change atomically
-            synchronized (mSurfaceHolder) {
-                mCanvasWidth = width;
-                mCanvasHeight = height;
-            }
-        }
-
-
-        public DrawerThread(SurfaceHolder surfaceHolder, Context context,
-                            Handler handler) {
+        public DrawerThread(SurfaceHolder surfaceHolder) {
             mSurfaceHolder = surfaceHolder;
-            mHandler = handler;
-            mContext = context;
-
         }
 
         @Override
@@ -104,27 +72,15 @@ public class DrawingView extends SurfaceView implements SurfaceHolder.Callback {
             if (canvas == null) {
                 return;
             }
+
             canvas.drawColor(Color.WHITE);
 
             for (Drawer d : drawers) {
                 d.draw(canvas);
             }
         }
-    } // THREAD
+    }
 
-    /**
-     * Handle to the application context, used to e.g. fetch Drawables.
-     */
-    private Context mContext;
-
-    /**
-     * Pointer to the text view to display "Paused.." etc.
-     */
-    private TextView mStatusText;
-
-    /**
-     * The thread that actually draws the animation
-     */
     private DrawerThread thread;
 
     public DrawingView(Context context, AttributeSet attrs) {
@@ -134,13 +90,7 @@ public class DrawingView extends SurfaceView implements SurfaceHolder.Callback {
         holder.addCallback(this);
 
         // create thread only; it's started in surfaceCreated()
-        thread = new DrawerThread(holder, context, new Handler() {
-
-            @Override
-            public void handleMessage(Message m) {
-                mStatusText.setText(m.getData().getString("text"));
-            }
-        });
+        thread = new DrawerThread(holder);
 
         setFocusable(true); // make sure we get key events
         drawers = Collections.synchronizedCollection(new ArrayList<Drawer>());
@@ -156,9 +106,7 @@ public class DrawingView extends SurfaceView implements SurfaceHolder.Callback {
     }
 
     @Override
-    public void surfaceChanged(SurfaceHolder holder, int format, int width,
-                               int height) {
-        thread.setSurfaceSize(width, height);
+    public void surfaceChanged(SurfaceHolder surfaceHolder, int i, int i2, int i3) {
     }
 
     @Override
@@ -175,7 +123,6 @@ public class DrawingView extends SurfaceView implements SurfaceHolder.Callback {
             }
         }
     }
-
 
     public Drawer addDrawer(Drawer drawer) {
         drawers.add(drawer);
