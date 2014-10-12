@@ -20,7 +20,7 @@ import purplehat.fr.purplehat.screen.ScreenUtilitiesService;
 public class DiscoveryService {
     private final static int DISCOVERY_BROADCAST_PORT = 4242;
     private final static int DISCOVERY_HANDSHAKE_PORT = 1337;
-    private final static int DISCOVERY_TIMEOUT = 0;
+    private final static int DISCOVERY_TIMEOUT = 5000;
     private BroadcastService broadcastService;
     private Context context;
 
@@ -94,17 +94,18 @@ public class DiscoveryService {
 
         byte[] masterAddress = new byte[4];
         byte[] externIdentifier = new byte[6];
-        byte[] gesturePosition = new byte[4];
+        byte[] gesturePositionX = new byte[2];
+        byte[] gesturePositionY = new byte[2];
         byte[] gestureDirection = new byte[1];
         socket.getInputStream().read(masterAddress, 0, 4);
         socket.getInputStream().read(externIdentifier, 0, 6);
-        socket.getInputStream().read(gesturePosition, 0, 2);
-        socket.getInputStream().read(gesturePosition, 2, 2);
+        socket.getInputStream().read(gesturePositionX, 0, 2);
+        socket.getInputStream().read(gesturePositionY, 0, 2);
         socket.getInputStream().read(gestureDirection, 0, 1);
         socket.close();
 
-        int externX = gesturePosition[0] + (int) gesturePosition[1] << 8;
-        int externY = gesturePosition[2] + (int) gesturePosition[3] << 8;
+        int externX = (gesturePositionX[0] & 0xff) + ((gesturePositionX[1] & 0xff) << 8);
+        int externY = (gesturePositionY[0] & 0xff) + ((gesturePositionY[1] & 0xff) << 8);
         int dx = swipeX - externX;
         int dy = swipeY - externY;
         int width = ScreenUtilitiesService.pixel2mm(new Point(ScreenUtilitiesService.getDisplayCenter().x * 2, 0)).getX().intValue();

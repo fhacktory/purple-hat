@@ -81,6 +81,10 @@ public class FullscreenActivity extends Activity {
 
     private Master master;
 
+    public World getWorld() {
+        return world;
+    }
+
     // THE WORLD
     World world = new World();
     private static FullscreenActivity instance = null;
@@ -134,12 +138,14 @@ public class FullscreenActivity extends Activity {
         mDrawerView.setOnTouchListener(new OnBackgroundTouchedListener(new OnBackgroundTouchedListener.InOrOutListener() {
             @Override
             public void onIn(int x, int y) {
-                onEntrantSwipeEvent(x, y);
+                Vector2<Double> p = ScreenUtilitiesService.pixel2mm(new Point(x, y));
+                onEntrantSwipeEvent(p.getX().intValue(), p.getY().intValue());
             }
 
             @Override
             public void onOut(int x, int y) {
-                onExitingSwipeEvent(x, y);
+                Vector2<Double> p = ScreenUtilitiesService.pixel2mm(new Point(x, y));
+                onExitingSwipeEvent(p.getX().intValue(), p.getY().intValue());
             }
         }, new OnBackgroundTouchedListener.TouchListener() {
             @Override
