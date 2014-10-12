@@ -15,6 +15,7 @@ import java.net.UnknownHostException;
 
 import purplehat.fr.purplehat.FullscreenActivity;
 import purplehat.fr.purplehat.Master;
+import purplehat.fr.purplehat.Slave;
 import purplehat.fr.purplehat.utils.ScreenUtilitiesService;
 
 /**
@@ -23,7 +24,7 @@ import purplehat.fr.purplehat.utils.ScreenUtilitiesService;
 public class DiscoveryService {
     private final static int DISCOVERY_BROADCAST_PORT = 4242;
     private final static int DISCOVERY_HANDSHAKE_PORT = 1337;
-    private final static int DISCOVERY_TIMEOUT = 5000;
+    private final static int DISCOVERY_TIMEOUT = 0;
     private static final String LOG_TAG = "DISCOVERY_SERVICE";
     private BroadcastService broadcastService;
     private Context context;
@@ -52,7 +53,8 @@ public class DiscoveryService {
         }
 
         Master master = FullscreenActivity.getInstance().getMaster();
-        byte[] mac = (master != null) ? master.getScreenId().getBytes() : getMACAddress();
+        Slave slave = FullscreenActivity.getInstance().getSlave();
+        byte[] mac = (master != null) ? master.getScreenId().getBytes() : (slave != null ? slave.getId().getBytes() : getMACAddress());
         Log.d(LOG_TAG, "device id: " + new String(mac));
 
         waitForABit();
@@ -108,6 +110,8 @@ public class DiscoveryService {
         byte[] mac = getMACAddress();
         waitForABit();
 
+        Log.d(LOG_TAG, "Receive info from " + new String(externIdentifier) + " : dx=" + dx + ", dy=" + dy);
+
         socket = new Socket(InetAddress.getByAddress(masterAddress), ConnectionListener.NEW_CONNEXION_PORT);
         socket.getOutputStream().write(mac, 0, 6);
         socket.getOutputStream().write(externIdentifier, 0, 6);
@@ -122,7 +126,7 @@ public class DiscoveryService {
         // become a slave
         FullscreenActivity fsa = FullscreenActivity.getInstance();
         if (fsa != null) {
-            fsa.becomeASlave(masterAddress, new String(mac, "UTF-8"));
+            fsa.becomeASlave(masterAddress, new String(mac));
         } else {
             Log.w(LOG_TAG, "FSA is null, couldn't become a slave");
         }
