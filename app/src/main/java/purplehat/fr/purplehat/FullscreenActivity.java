@@ -7,7 +7,6 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Point;
-import android.graphics.PointF;
 import android.graphics.Rect;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
@@ -28,11 +27,13 @@ import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import purplehat.fr.purplehat.Geometrics.Edge;
 import purplehat.fr.purplehat.game.Ball;
 import purplehat.fr.purplehat.game.Rect2;
 import purplehat.fr.purplehat.Geometrics.PolygonUtill;
 import purplehat.fr.purplehat.game.Rect2;
 import purplehat.fr.purplehat.game.Vector2;
+import purplehat.fr.purplehat.game.Ball;
 import purplehat.fr.purplehat.game.World;
 import purplehat.fr.purplehat.gesturelistener.OnBackgroundTouchedListener;
 import purplehat.fr.purplehat.screen.ScreenUtilitiesService;
@@ -79,10 +80,6 @@ public class FullscreenActivity extends Activity {
     private Slave slave;
 
     private Vector2<Double> viewportOffset;
-
-    public Master getMaster() {
-        return master;
-    }
 
     private Master master;
 
@@ -172,6 +169,22 @@ public class FullscreenActivity extends Activity {
             }
         });
 
+        // World drawer
+        mDrawerView.addDrawer(new DrawingView.Drawer() {
+            @Override
+            public void draw(Canvas canvas) {
+                drawWorld(canvas);
+            }
+        });
+
+        // UI drawer
+        mDrawerView.addDrawer(new DrawingView.Drawer() {
+            @Override
+            public void draw(Canvas canvas) {
+                drawHUD(canvas);
+            }
+        });
+
         mDrawerView.setOnTouchListener(new OnBackgroundTouchedListener(new OnBackgroundTouchedListener.InOrOutListener() {
             @Override
             public void onIn(int x, int y) {
@@ -181,6 +194,22 @@ public class FullscreenActivity extends Activity {
             @Override
             public void onOut(int x, int y) {
                 onExitingSwipeEvent(x, y);
+            }
+        }, new OnBackgroundTouchedListener.TouchListener() {
+            @Override
+            public void onTouchDown(int x, int y) {
+                swiping = true;
+            }
+
+            @Override
+            public void onTouchUp(int x, int y) {
+                swiping = false;
+            }
+
+            @Override
+            public void onTouchMove(int x, int y) {
+                currentSwipePoint.x = x;
+                currentSwipePoint.y = y;
             }
         }));
 
@@ -268,12 +297,43 @@ public class FullscreenActivity extends Activity {
         new Thread(new ConnexionListener()).start();
     }
 
-    @Override
-    protected void onPostCreate(Bundle savedInstanceState) {
-        super.onPostCreate(savedInstanceState);
+    Point currentSwipePoint = new Point();
+    boolean swiping = false;
 
-        //onExitingSwipeEvent(42, 42);
-        //onEntrantSwipeEvent(42, 42);
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if (master != null) {
+            try {
+                master.stop();
+            } catch (IOException e) {
+            } catch (InterruptedException e) {
+            }
+        } else if (slave != null) {
+            slave.close();
+        }
+    }
+
+    private void drawWorld(Canvas canvas) {
+        // Balls are yellow
+        Paint paint = new Paint();
+        paint.setColor(Color.YELLOW);
+        for (Ball ball : world.getBalls()) {
+            //canvas.drawCircle(ball.getPosition().getX(), ball.getPosition().getY(), ball.getRadius(), paint);
+        }
+    }
+
+    private void drawHUD(Canvas canvas) {
+        if (swiping) {
+            Paint paint = new Paint(Color.BLACK);
+            paint.setStrokeWidth(10);
+            canvas.drawLine(0, currentSwipePoint.y,
+                    ScreenUtilitiesService.getWidth(), currentSwipePoint.y,
+                    paint);
+            canvas.drawLine(currentSwipePoint.x, 0,
+                    currentSwipePoint.x, ScreenUtilitiesService.getHeight(),
+                    paint);
+        }
     }
 
     public void becomeASlave(byte[] masterAddress) {
@@ -405,8 +465,6 @@ public class FullscreenActivity extends Activity {
         }
     }
 
-
-
     public void testReadBroadcastedPackets() {
         new Thread(new Runnable() {
             @Override
@@ -472,13 +530,13 @@ public class FullscreenActivity extends Activity {
 
     void testRect() {
         final ArrayList<Rect> list = new ArrayList<Rect>();
-        list.add(new Rect(10, 100, 500, 200));
-        list.add(new Rect(10, 200, 500, 300));
+        list.add(new Rect(10, 500, 500, 500));
+        list.add(new Rect(200, 200, 400, 400));
         list.add(new Rect(10, 300, 500, 400));
-        list.add(new Rect(10, 400, 500, 500));
-        list.add(new Rect(10, 500, 500, 600));
+//        list.add(new Rect(10, 400, 500, 500));
+//        list.add(new Rect(10, 500, 500, 600));
 
-        final PointF[] ps = PolygonUtill.borderOfRectangleUnion(list.toArray(new Rect[list.size()]));
+        final Edge[] ps = PolygonUtill.borderOfRectangleUnion(list.toArray(new Rect[list.size()]));
         Random rand = new Random();
         final ArrayList<Integer> color = new ArrayList<Integer>();
         color.add(Color.argb(255, rand.nextInt(255), rand.nextInt(255), rand.nextInt(255)));
@@ -507,30 +565,15 @@ public class FullscreenActivity extends Activity {
             public void draw(Canvas canvas) {
                 Paint paint = new Paint(Color.BLACK);
                 paint.setStrokeWidth(20f);
-                for(int i =0 ; i < ps.length - 1; i++) {
-                    canvas.drawLine(ps[i].x, ps[i].y, ps[i +1 ].x, ps[i+1].y, paint);
+                for(int i =0 ; i < ps.length; i++) {
+                    canvas.drawLine(ps[i].p1.x, ps[i].p1.y, ps[i].p2.x, ps[i].p2.y, paint);
                 }
 
             }
         });
     }
 
-    @Override
-    protected void onStop() {
-        super.onStop();
-        /*if (master != null) {
-            try {
-                master.stop();
-            } catch (IOException e) {
-                e.printStackTrace();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-        if (slave != null) {
-            slave.close();
-        }*/
+    public Master getMaster() {
+        return master;
     }
 }
-
-
