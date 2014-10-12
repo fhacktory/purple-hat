@@ -6,6 +6,7 @@ import android.graphics.Color;
 import android.os.Handler;
 import android.os.Message;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.widget.TextView;
@@ -72,9 +73,12 @@ public class DrawingView extends SurfaceView implements SurfaceHolder.Callback {
             if (canvas == null) {
                 return;
             }
+            Log.d(LOG_TAG, "drawing canvas");
 
+            // fill background
             canvas.drawColor(Color.WHITE);
 
+            // drawers draw
             for (Drawer d : drawers) {
                 d.draw(canvas);
             }
@@ -92,7 +96,6 @@ public class DrawingView extends SurfaceView implements SurfaceHolder.Callback {
         // create thread only; it's started in surfaceCreated()
         thread = new DrawerThread(holder);
 
-        setFocusable(true); // make sure we get key events
         drawers = Collections.synchronizedCollection(new ArrayList<Drawer>());
     }
 

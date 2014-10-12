@@ -60,7 +60,6 @@ public class Master {
             @Override
             public void onOpen(WebSocket conn, ClientHandshake handshake) {
                 Log.d(LOG_TAG, "connection opened");
-                // TODO send position
             }
 
             @Override
@@ -94,7 +93,7 @@ public class Master {
     }
 
     public void addSlaveScreen(String screenId, PhysicalScreen slaveScreen) {
-        Log.d(LOG_TAG, "Nombre de client : " + String.valueOf(screenMap.size()));
+        Log.d(LOG_TAG, "new client, total: " + String.valueOf(screenMap.size()));
         screenMap.put(screenId, slaveScreen);
         // broadcastWorld();
         broadcastPosition();
