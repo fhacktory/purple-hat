@@ -280,7 +280,7 @@ public class FullscreenActivity extends Activity {
     boolean swiping = false;
 
     Bitmap purpleHatBmp = null;
-    boolean firstDraw = true;
+
 
 
     private void drawWorld(Canvas canvas) {
@@ -291,12 +291,9 @@ public class FullscreenActivity extends Activity {
         paint.setColor(Color.RED);
         synchronized (world.getBalls()) {
             for (Ball ball : world.getBalls()) {
-            if(firstDraw) {
-                ball.setRainbowDrawer(new RainbowDrawer(this));
-                mDrawerView.addDrawer(ball.getRainbowDrawer());
-            }
+
                 Point p = ScreenUtilitiesService.mm2pixel(ball.getPosition(), viewportOffset);
-            ball.getRainbowDrawer().setXY(p.x,p.y);
+
                 if (purpleHatBmp == null) {
                     canvas.drawCircle(p.x, p.y, ScreenUtilitiesService.mm2pixel(ball.getRadius().floatValue()), paint);
                 } else {
@@ -304,7 +301,7 @@ public class FullscreenActivity extends Activity {
                             p.y - (purpleHatBmp.getHeight() / 2), paint);
                 }
             }
-        firstDraw = false;
+
         }
     }
 

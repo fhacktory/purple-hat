@@ -4,7 +4,7 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
-import android.graphics.Matrix;
+import android.graphics.Color;
 import android.graphics.Paint;
 
 import java.util.ArrayDeque;
@@ -83,11 +83,13 @@ public class RainbowDrawer implements DrawingView.Drawer {
         paint.setStrokeWidth(RAY_WIDTH);
         float offset = -(colors.length/2) * RAY_WIDTH;
         Iterator itr = oldPoses.iterator();
-        /*for (int i = 0; i < colors.length; i++) {
+        //*
+        for (int i = 0; i < colors.length; i++) {
+
 
             int color = Color.parseColor(colors[i]);
             paint.setColor(color);
-            Iterator itr = oldPoses.iterator();
+
             synchronized (oldPoses) {
                 while (itr.hasNext()) {
                     current = (OldPos) itr.next();
@@ -96,7 +98,11 @@ public class RainbowDrawer implements DrawingView.Drawer {
                 }
 
             }
-            offset += RAY_WIDTH;*/
+            offset += RAY_WIDTH;
+        }
+            //*/
+            /*
+             Iterator itr = oldPoses.iterator();
 
             while (itr.hasNext()) {
                 current = (OldPos) itr.next();
@@ -120,7 +126,8 @@ public class RainbowDrawer implements DrawingView.Drawer {
                 canvas.drawBitmap(rainbow, matrix, null);
                 alpha -= alpha / HISTORY_SIZE;
             }
-        //}
+        //*/
+
 
 
     }
