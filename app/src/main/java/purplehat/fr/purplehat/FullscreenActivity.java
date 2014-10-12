@@ -2,6 +2,8 @@ package purplehat.fr.purplehat;
 
 
 import android.app.Activity;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.LinearGradient;
@@ -20,6 +22,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Timer;
@@ -174,73 +177,6 @@ public class FullscreenActivity extends Activity {
         new Thread(new ConnexionListener()).start();
     }
 
-    private OnBackgroundTouchedListener.Direction currentSwipeDirection;
-    Point currentSwipePoint = new Point();
-    boolean swiping = false;
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-        if (master != null) {
-            try {
-                master.stop();
-            } catch (IOException e) {
-            } catch (InterruptedException e) {
-            }
-        } else if (slave != null) {
-            slave.close();
-        }
-    }
-
-    private void drawWorld(Canvas canvas) {
-        if (getInstance() == null)
-            return;
-        Paint paint = new Paint();
-        paint.setColor(Color.RED);
-        for (Ball ball : world.getBalls()) {
-            Point p = ScreenUtilitiesService.mm2pixel(ball.getPosition(), viewportOffset);
-            canvas.drawCircle(p.x, p.y, ScreenUtilitiesService.mm2pixel(ball.getRadius().floatValue()), paint);
-        }
-    }
-
-    private void drawHUD(Canvas canvas) {
-        if (swiping && currentSwipeDirection != null) {
-            Paint paint = new Paint();
-            paint.setStrokeWidth(0);
-            Rect rect = null;
-            Shader shader = null;
-
-            switch (currentSwipeDirection) {
-                case UP_DOWN:
-                    break;
-
-                case DOWN_UP:
-                    break;
-
-                case LEFT_RIGHT:
-                    rect = new Rect((int) (0.85f * (float) ScreenUtilitiesService.getWidth()),  0,
-                            ScreenUtilitiesService.getWidth(), ScreenUtilitiesService.getHeight());
-                    shader = new LinearGradient(ScreenUtilitiesService.getWidth() - currentSwipePoint.x / 2, rect.top,
-                            ScreenUtilitiesService.getWidth(), rect.top,
-                            Color.WHITE, Color.BLACK, Shader.TileMode.CLAMP);
-                    break;
-
-                case RIGHT_LEFT:
-                    rect = new Rect(0, 0,
-                            (int) (0.15f * (float) ScreenUtilitiesService.getWidth()), ScreenUtilitiesService.getHeight());
-                    shader = new LinearGradient(currentSwipePoint.x / 2, rect.top,
-                            0, rect.top,
-                            Color.WHITE, Color.BLACK, Shader.TileMode.CLAMP);
-                    break;
-            }
-
-            /*if (rect != null && shader != null) {
-                paint.setShader(shader);
-                canvas.drawRect(rect, paint);
-            }*/
-        }
-    }
-
     @Override
     protected void onPostCreate(Bundle savedInstanceState) {
         super.onPostCreate(savedInstanceState);
@@ -321,6 +257,91 @@ public class FullscreenActivity extends Activity {
                 }
             }
         }, 0, 30);
+
+        // start connexion listener
+        new Thread(new ConnexionListener()).start();
+
+        // load bitmap
+        try {
+            InputStream stream = getAssets().open("purplehat-small.png");
+            purpleHatBmp = BitmapFactory.decodeStream(stream);
+        } catch (IOException e) {
+        }
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if (master != null) {
+            try {
+                master.stop();
+            } catch (IOException e) {
+            } catch (InterruptedException e) {
+            }
+        } else if (slave != null) {
+            slave.close();
+        }
+    }
+
+    private OnBackgroundTouchedListener.Direction currentSwipeDirection;
+    Point currentSwipePoint = new Point();
+    boolean swiping = false;
+
+    Bitmap purpleHatBmp = null;
+
+    private void drawWorld(Canvas canvas) {
+        if (getInstance() == null) {
+            return;
+        }
+        Paint paint = new Paint();
+        paint.setColor(Color.RED);
+        for (Ball ball : world.getBalls()) {
+            Point p = ScreenUtilitiesService.mm2pixel(ball.getPosition(), viewportOffset);
+            if (purpleHatBmp == null) {
+                canvas.drawCircle(p.x, p.y, ScreenUtilitiesService.mm2pixel(ball.getRadius().floatValue()), paint);
+            } else {
+                canvas.drawBitmap(purpleHatBmp, p.x - (purpleHatBmp.getWidth() / 2),
+                        p.y - (purpleHatBmp.getHeight() / 2), paint);
+            }
+        }
+    }
+
+    private void drawHUD(Canvas canvas) {
+        if (swiping && currentSwipeDirection != null) {
+            Paint paint = new Paint();
+            paint.setStrokeWidth(0);
+            Rect rect = null;
+            Shader shader = null;
+
+            switch (currentSwipeDirection) {
+                case UP_DOWN:
+                    break;
+
+                case DOWN_UP:
+                    break;
+
+                case LEFT_RIGHT:
+                    rect = new Rect((int) (0.85f * (float) ScreenUtilitiesService.getWidth()),  0,
+                            ScreenUtilitiesService.getWidth(), ScreenUtilitiesService.getHeight());
+                    shader = new LinearGradient(ScreenUtilitiesService.getWidth() - currentSwipePoint.x / 2, rect.top,
+                            ScreenUtilitiesService.getWidth(), rect.top,
+                            Color.WHITE, Color.BLACK, Shader.TileMode.CLAMP);
+                    break;
+
+                case RIGHT_LEFT:
+                    rect = new Rect(0, 0,
+                            (int) (0.15f * (float) ScreenUtilitiesService.getWidth()), ScreenUtilitiesService.getHeight());
+                    shader = new LinearGradient(currentSwipePoint.x / 2, rect.top,
+                            0, rect.top,
+                            Color.WHITE, Color.BLACK, Shader.TileMode.CLAMP);
+                    break;
+            }
+
+            /*if (rect != null && shader != null) {
+                paint.setShader(shader);
+                canvas.drawRect(rect, paint);
+            }*/
+        }
     }
 
     public void becomeASlave(byte[] masterAddress, String id) {
