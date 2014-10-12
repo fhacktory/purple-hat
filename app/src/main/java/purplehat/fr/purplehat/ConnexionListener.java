@@ -49,14 +49,15 @@ public class ConnexionListener implements Runnable {
             } catch (UnsupportedEncodingException e) {
                 return;
             }
-            int dx = bdx[0] + bdx[1] << 8;
-            int dy = bdy[0] + bdy[1] << 8;
-            int width = bwidth[0] + bwidth[1] << 8;
-            int height = bheight[0] + bheight[1] << 8;
+            int dx = (bdx[0] & 0xff) + ((bdx[1] & 0xff) << 8);
+            int dy = (bdy[0] & 0xff) + ((bdy[1] & 0xff) << 8);
+            int width = (bwidth[0] & 0xff) + ((bwidth[1] & 0xff) << 8);
+            int height = (bheight[0] & 0xff) + ((bheight[1] & 0xff) << 8);
             // TODO direction
 
             synchronized (FullscreenActivity.getInstance().getMaster()) {
-                if (FullscreenActivity.getInstance().getMaster() != null) {
+                if (FullscreenActivity.getInstance() != null
+                && FullscreenActivity.getInstance().getMaster() != null) {
                     PhysicalScreen screen = FullscreenActivity.getInstance().getMaster().getScreen(strOldDeviceIdentifier);
                     if (screen == null) {
                         return;
