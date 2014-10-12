@@ -92,6 +92,7 @@ public class DiscoveryService {
         broadcastService.send(new byte[]{42}, 1);
         ServerSocket serverSocket  = new ServerSocket(DISCOVERY_HANDSHAKE_PORT);
         serverSocket.setSoTimeout(DISCOVERY_TIMEOUT);
+        serverSocket.setReuseAddress(true);
         Socket socket = serverSocket.accept();
 
         byte[] masterAddress = new byte[4];
@@ -114,7 +115,7 @@ public class DiscoveryService {
         short height = (short) ScreenUtilitiesService.pixel2mm(new Point(0, ScreenUtilitiesService.getDisplayCenter().y * 2)).getY().intValue();
         byte[] mac = getMACAddress();
 
-        FullscreenActivity.getInstance().becomeASlave(masterAddress);
+        FullscreenActivity.getInstance().becomeASlave(masterAddress, new String(mac, "UTF-8"));
         try {
             Thread.sleep(500);
         } catch (InterruptedException _) {
