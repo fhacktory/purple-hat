@@ -29,6 +29,7 @@ public class Action {
     public JSONObject getJSON() {
         JSONObject json = new JSONObject();
         try {
+            json.put("action", "create ball");
             json.put("init_x", init_x);
             json.put("init_y", init_y);
             json.put("mmPerMilis", mmPerMilis);
@@ -40,9 +41,9 @@ public class Action {
         return json;
     }
 
-    private static Action parseJson(JSONObject json) {
+    public static Action parseJson(JSONObject json) {
         try {
-            return  new Action(
+            return new Action(
             json.getDouble("direction_y"),
             json.getDouble("init_x"),
             json.getDouble("init_y"),
