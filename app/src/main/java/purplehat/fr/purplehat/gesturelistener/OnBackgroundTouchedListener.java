@@ -172,7 +172,7 @@ public class OnBackgroundTouchedListener implements View.OnTouchListener {
 
         // Fire event for in/out
         if(inorout.equals(IO.IN)||inorout==IO.BOTH) {
-            inOrOutListener.onIn(x, y);
+            inOrOutListener.onIn((int) origin.x, (int) origin.y);
         }
 
         if(inorout.equals(IO.OUT)||inorout==IO.BOTH) {
