@@ -14,6 +14,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+import purplehat.fr.purplehat.game.Vector2;
 import purplehat.fr.purplehat.screen.ScreenUtilitiesService;
 
 /**
@@ -29,6 +30,10 @@ public class Master {
         return screenMap.get(id);
     }
 
+    public Map<String, PhysicalScreen> getScreenMap() {
+        return screenMap;
+    }
+
     private Map<String, PhysicalScreen> screenMap;
     private WebSocketServer server;
 
@@ -40,9 +45,9 @@ public class Master {
     public Master(int port, String screenId, PhysicalScreen baseScreen) {
         if (baseScreen == null) {
             baseScreen = new PhysicalScreen(0, 0, 0, 0);
-            Point p = ScreenUtilitiesService.pixel2mm(ScreenUtilitiesService.getDisplayCenter());
-            baseScreen.setX2(p.x * 2);
-            baseScreen.setY2(p.y * 2);
+            Vector2<Double> p = ScreenUtilitiesService.pixel2mm(ScreenUtilitiesService.getDisplayCenter());
+            baseScreen.setX2(p.getX() * 2);
+            baseScreen.setY2(p.getY() * 2);
         }
         this.baseScreen = baseScreen;
         this.screenId = screenId;

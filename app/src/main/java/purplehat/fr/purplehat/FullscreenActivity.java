@@ -23,10 +23,13 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Random;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import purplehat.fr.purplehat.Geometrics.Edge;
 import purplehat.fr.purplehat.Geometrics.PolygonUtill;
 import purplehat.fr.purplehat.game.Ball;
+import purplehat.fr.purplehat.game.Vector2;
 import purplehat.fr.purplehat.game.World;
 import purplehat.fr.purplehat.gesturelistener.OnBackgroundTouchedListener;
 import purplehat.fr.purplehat.screen.ScreenUtilitiesService;
@@ -72,11 +75,7 @@ public class FullscreenActivity extends Activity {
 
     private Slave slave;
 
-    private Point viewportOffset;
-
-    public Master getMaster() {
-        return master;
-    }
+    private Vector2<Double> viewportOffset;
 
     private Master master;
 
@@ -99,7 +98,7 @@ public class FullscreenActivity extends Activity {
             e.printStackTrace();
         }
 
-        viewportOffset = new Point(0, 0);
+        viewportOffset = new Vector2<Double>(0.0, 0.0);
 
         super.onCreate(savedInstanceState);
 
@@ -158,14 +157,27 @@ public class FullscreenActivity extends Activity {
             @Override
             public void draw(Canvas canvas) {
                 Paint paint = new Paint();
-                paint.setColor(Color.YELLOW);
+                paint.setColor(Color.RED);
                 for (Ball ball : world.getBalls()) {
-                    Point p = ScreenUtilitiesService.mm2pixel(new Point(ball.getPosition().getX().intValue(),
-                            ball.getPosition().getY().intValue()),
-                            viewportOffset);
-
+                    Point p = ScreenUtilitiesService.mm2pixel(ball.getPosition(), viewportOffset);
                     canvas.drawCircle(p.x, p.y, ScreenUtilitiesService.mm2pixel(ball.getRadius().floatValue()), paint);
                 }
+            }
+        });
+
+        // World drawer
+        mDrawerView.addDrawer(new DrawingView.Drawer() {
+            @Override
+            public void draw(Canvas canvas) {
+                drawWorld(canvas);
+            }
+        });
+
+        // UI drawer
+        mDrawerView.addDrawer(new DrawingView.Drawer() {
+            @Override
+            public void draw(Canvas canvas) {
+                drawHUD(canvas);
             }
         });
 
@@ -179,7 +191,95 @@ public class FullscreenActivity extends Activity {
             public void onOut(int x, int y) {
                 onExitingSwipeEvent(x, y);
             }
+        }, new OnBackgroundTouchedListener.TouchListener() {
+            @Override
+            public void onTouchDown(int x, int y) {
+                swiping = true;
+            }
+
+            @Override
+            public void onTouchUp(int x, int y) {
+                swiping = false;
+            }
+
+            @Override
+            public void onTouchMove(int x, int y) {
+                currentSwipePoint.x = x;
+                currentSwipePoint.y = y;
+            }
         }));
+
+        Timer animationTimer = new Timer();
+        animationTimer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                final float dt = 0.030f;
+                for (Ball ball : world.getBalls()) {
+                    Vector2<Double> om = ball.getPosition();
+                    Vector2<Double> vel = ball.getVelocity();
+                    Vector2<Double> dom = new Vector2<Double>(vel.getX() * dt, vel.getY() * dt);
+                    om.setX(om.getX() + dom.getX());
+                    om.setY(om.getY() + dom.getY());
+
+                    if (master != null) {
+                        boolean inWorld = false;
+                        for (PhysicalScreen screen : master.getScreenMap().values()) {
+                            if (om.getX() >= screen.getX1()
+                                    && om.getX() <= screen.getX2()
+                                    && om.getY() >= screen.getY1()
+                                    && om.getY() <= screen.getY2()) {
+                                inWorld = true;
+                                break;
+                            }
+                        }
+
+                        if (!inWorld) {
+                            PhysicalScreen screen = ScreenUtilitiesService.buildBasePhysicalScreen();
+                            if (om.getX() < screen.getX1()) {
+                                om.setX(screen.getX1());
+                                ball.getVelocity().setX(-ball.getVelocity().getX());
+                            } else if (om.getX() > screen.getX2()) {
+                                om.setX(screen.getX2());
+                                ball.getVelocity().setX(-ball.getVelocity().getX());
+                            } else if (om.getY() < screen.getY1()) {
+                                om.setY(screen.getY1());
+                                ball.getVelocity().setY(-ball.getVelocity().getY());
+                            } else if (om.getY() > screen.getY2()) {
+                                om.setY(screen.getY2());
+                                ball.getVelocity().setY(-ball.getVelocity().getY());
+                            }
+                        }
+                    } else if (master == null && slave == null) {
+                        boolean inWorld = false;
+                        PhysicalScreen screen = ScreenUtilitiesService.buildBasePhysicalScreen();
+                        if (om.getX() >= screen.getX1()
+                                && om.getX() <= screen.getX2()
+                                && om.getY() >= screen.getY1()
+                                && om.getY() <= screen.getY2()) {
+                            inWorld = true;
+                        }
+
+                        if (!inWorld) {
+                            if (om.getX() < screen.getX1()) {
+                                om.setX(screen.getX1());
+                                ball.getVelocity().setX(-ball.getVelocity().getX());
+                            } else if (om.getX() > screen.getX2()) {
+                                om.setX(screen.getX2());
+                                ball.getVelocity().setX(-ball.getVelocity().getX());
+                            } else if (om.getY() < screen.getY1()) {
+                                om.setY(screen.getY1());
+                                ball.getVelocity().setY(-ball.getVelocity().getY());
+                            } else if (om.getY() > screen.getY2()) {
+                                om.setY(screen.getY2());
+                                ball.getVelocity().setY(-ball.getVelocity().getY());
+                            }
+                        }
+                    }
+
+                    ball.setPosition(om);
+                }
+            }
+        }, 0, 30);
 
         //testTimer();
         //testRect();
@@ -193,12 +293,43 @@ public class FullscreenActivity extends Activity {
         new Thread(new ConnexionListener()).start();
     }
 
-    @Override
-    protected void onPostCreate(Bundle savedInstanceState) {
-        super.onPostCreate(savedInstanceState);
+    Point currentSwipePoint = new Point();
+    boolean swiping = false;
 
-        //onExitingSwipeEvent(42, 42);
-        //onEntrantSwipeEvent(42, 42);
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if (master != null) {
+            try {
+                master.stop();
+            } catch (IOException e) {
+            } catch (InterruptedException e) {
+            }
+        } else if (slave != null) {
+            slave.close();
+        }
+    }
+
+    private void drawWorld(Canvas canvas) {
+        // Balls are yellow
+        Paint paint = new Paint();
+        paint.setColor(Color.YELLOW);
+        for (Ball ball : world.getBalls()) {
+            //canvas.drawCircle(ball.getPosition().getX(), ball.getPosition().getY(), ball.getRadius(), paint);
+        }
+    }
+
+    private void drawHUD(Canvas canvas) {
+        if (swiping) {
+            Paint paint = new Paint(Color.BLACK);
+            paint.setStrokeWidth(10);
+            canvas.drawLine(0, currentSwipePoint.y,
+                    ScreenUtilitiesService.getWidth(), currentSwipePoint.y,
+                    paint);
+            canvas.drawLine(currentSwipePoint.x, 0,
+                    currentSwipePoint.x, ScreenUtilitiesService.getHeight(),
+                    paint);
+        }
     }
 
     public void becomeASlave(byte[] masterAddress) {
@@ -330,8 +461,6 @@ public class FullscreenActivity extends Activity {
         }
     }
 
-
-
     public void testReadBroadcastedPackets() {
         new Thread(new Runnable() {
             @Override
@@ -440,22 +569,7 @@ public class FullscreenActivity extends Activity {
         });
     }
 
-    @Override
-    protected void onStop() {
-        super.onStop();
-        /*if (master != null) {
-            try {
-                master.stop();
-            } catch (IOException e) {
-                e.printStackTrace();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-        if (slave != null) {
-            slave.close();
-        }*/
+    public Master getMaster() {
+        return master;
     }
 }
-
-
