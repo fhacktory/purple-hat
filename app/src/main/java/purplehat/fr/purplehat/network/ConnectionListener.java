@@ -48,19 +48,12 @@ public class ConnectionListener implements Runnable {
                 return;
             }
 
-            String strNewDeviceIdentifier = null;
-            String strOldDeviceIdentifier = null;
-            try {
-                strNewDeviceIdentifier = new String(newDeviceIdentifier, "UTF-8");
-                strOldDeviceIdentifier = new String(oldDeviceIdentifier, "UTF-8");
-            } catch (UnsupportedEncodingException e) {
-                return;
-            }
+            String strNewDeviceIdentifier = new String(newDeviceIdentifier);
+            String strOldDeviceIdentifier = new String(oldDeviceIdentifier);
             short dx = (short) ((bdx[0] & 0xff) + (short) ((bdx[1] & 0xff) << 8));
             short dy = (short) ((bdy[0] & 0xff) + (short) ((bdy[1] & 0xff) << 8));
             short width = (short) ((bwidth[0] & 0xff) + (short) ((bwidth[1] & 0xff) << 8));
             short height = (short) ((bheight[0] & 0xff) + (short) ((bheight[1] & 0xff) << 8));
-            // TODO direction
 
             // add new screen to master
             if (FullscreenActivity.getInstance() != null) {
@@ -69,6 +62,11 @@ public class ConnectionListener implements Runnable {
                     synchronized (master) {
                         PhysicalScreen screen = master.getScreen(strOldDeviceIdentifier);
                         if (screen == null) {
+                            Log.d(LOG_TAG, "screen is null for id " + strOldDeviceIdentifier);
+                            Log.d(LOG_TAG, "Available IDs are:");
+                            for (String id : master.getScreenMap().keySet()) {
+                                Log.d(LOG_TAG, id);
+                            }
                             return;
                         }
                         double x = -dx + screen.getX1();

@@ -122,7 +122,7 @@ public class DiscoveryService {
         // become a slave
         FullscreenActivity fsa = FullscreenActivity.getInstance();
         if (fsa != null) {
-            fsa.becomeASlave(masterAddress, new String(mac, "UTF-8"));
+            fsa.becomeASlave(masterAddress, new String(mac));
         } else {
             Log.w(LOG_TAG, "FSA is null, couldn't become a slave");
         }
