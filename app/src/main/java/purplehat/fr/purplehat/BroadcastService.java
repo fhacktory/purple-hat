@@ -33,6 +33,7 @@ public class BroadcastService {
         this.socket = new DatagramSocket(this.port);
         this.socket.setBroadcast(true);
         this.socket.setSoTimeout(timeout);
+        this.socket.setReuseAddress(true);
     }
 
     private InetAddress getBroadcastAddress() throws IOException {

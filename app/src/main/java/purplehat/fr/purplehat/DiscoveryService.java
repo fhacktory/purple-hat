@@ -10,6 +10,7 @@ import java.net.NetworkInterface;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.nio.ByteBuffer;
 import java.util.Timer;
 
 import purplehat.fr.purplehat.screen.ScreenUtilitiesService;
@@ -50,11 +51,13 @@ public class DiscoveryService {
         } catch (InterruptedException _) {
         }
 
+        short sswipeX = (short) swipeX;
+        short sswipeY = (short) swipeY;
         Socket socket = new Socket(address, DISCOVERY_HANDSHAKE_PORT);
         socket.getOutputStream().write(masterAddrBytes, 0, 4);
         socket.getOutputStream().write(mac, 0, 6);
-        socket.getOutputStream().write(new byte[]{(byte) (swipeX & 0x00FF), (byte) ((swipeX & 0xFF00) >> 8)}, 0, 2);
-        socket.getOutputStream().write(new byte[]{(byte) (swipeY & 0x00FF), (byte) ((swipeY & 0xFF00) >> 8)}, 0, 2);
+        socket.getOutputStream().write(new byte[]{(byte) (sswipeX & 0x00FF), (byte) ((sswipeX & 0xFF00) >> 8)}, 0, 2);
+        socket.getOutputStream().write(new byte[]{(byte) (sswipeY & 0x00FF), (byte) ((sswipeY & 0xFF00) >> 8)}, 0, 2);
         socket.getOutputStream().write(new byte[]{(byte) 0}, 0, 1); // TODO direction
         socket.close();
     }
@@ -104,12 +107,12 @@ public class DiscoveryService {
         socket.getInputStream().read(gestureDirection, 0, 1);
         socket.close();
 
-        int externX = (gesturePositionX[0] & 0xff) + ((gesturePositionX[1] & 0xff) << 8);
-        int externY = (gesturePositionY[0] & 0xff) + ((gesturePositionY[1] & 0xff) << 8);
-        int dx = swipeX - externX;
-        int dy = swipeY - externY;
-        int width = ScreenUtilitiesService.pixel2mm(new Point(ScreenUtilitiesService.getDisplayCenter().x * 2, 0)).getX().intValue();
-        int height = ScreenUtilitiesService.pixel2mm(new Point(0, ScreenUtilitiesService.getDisplayCenter().y * 2)).getY().intValue();
+        short externX = (short) ((byte) (gesturePositionX[0] & 0xff) + (short) ((byte) (gesturePositionX[1] & 0xff) << 8));
+        short externY = (short) ((byte) (gesturePositionY[0] & 0xff) + (short) ((byte) (gesturePositionY[1] & 0xff) << 8));
+        short dx = (short) (((short) (swipeX)) - externX);
+        short dy = (short) (((short) (swipeY)) - externY);
+        short width = (short) ScreenUtilitiesService.pixel2mm(new Point(ScreenUtilitiesService.getDisplayCenter().x * 2, 0)).getX().intValue();
+        short height = (short) ScreenUtilitiesService.pixel2mm(new Point(0, ScreenUtilitiesService.getDisplayCenter().y * 2)).getY().intValue();
         byte[] mac = getMACAddress();
 
         FullscreenActivity.getInstance().becomeASlave(masterAddress);
