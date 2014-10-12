@@ -4,6 +4,7 @@ import android.util.Log;
 
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -13,12 +14,15 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 /**
  * Created by jmcomets on 11/10/14.
  */
 public class Slave {
+
+    private PhysicalScreen physicalScreen;
 
     public interface Listener {
         public void notify(JSONObject data);
@@ -27,10 +31,6 @@ public class Slave {
     private static final String LOG_TAG = "MASTER_CLIENT";
     private WebSocketClient client;
     private Map<String, Collection<Listener>> allListeners;
-
-    public byte[] getMasterAddress() {
-        return masterAddress;
-    }
 
     private byte[] masterAddress = null;
 
@@ -110,5 +110,9 @@ public class Slave {
         if (isConnected()) {
             client.close();
         }
+    }
+
+    public byte[] getMasterAddress() {
+        return masterAddress;
     }
 }

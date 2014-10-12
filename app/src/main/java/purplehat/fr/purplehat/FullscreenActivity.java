@@ -93,7 +93,6 @@ public class FullscreenActivity extends Activity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        instance = this;
         try {
             discoveryService = new DiscoveryService(getApplicationContext());
         } catch (IOException e) {
@@ -112,60 +111,9 @@ public class FullscreenActivity extends Activity {
                 WindowManager.LayoutParams.FLAG_FULLSCREEN);
         getActionBar().hide();
 
-        // Set up an instance of SystemUiHider to control the system UI for
-        // this activity.
-        /*
-        mSystemUiHider = SystemUiHider.getInstance(this, contentView, HIDER_FLAGS);
-        mSystemUiHider.setup();
-        mSystemUiHider
-                .setOnVisibilityChangeListener(new SystemUiHider.OnVisibilityChangeListener() {
-                    // Cached values.
-                    int mControlsHeight;
-                    int mShortAnimTime;
-
-                    @Override
-                    @TargetApi(Build.VERSION_CODES.HONEYCOMB_MR2)
-                    public void onVisibilityChange(boolean visible) {
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2) {
-                            // If the ViewPropertyAnimator API is available
-                            // (Honeycomb MR2 and later), use it to animate the
-                            // in-layout UI controls at the bottom of the
-                            // screen.
-
-                            if (mShortAnimTime == 0) {
-                                mShortAnimTime = getResources().getInteger(
-                                        android.R.integer.config_shortAnimTime);
-                            }
-
-                        } else {
-                            // If the ViewPropertyAnimator APIs aren't
-                            // available, simply show or hide the in-layout UI
-                            // controls.
-
-                        }
-
-                        if (visible && AUTO_HIDE) {
-                            // Schedule a hide().
-                            delayedHide(AUTO_HIDE_DELAY_MILLIS);
-                        }
-                    }
-                });
-*/
-
         mDrawerView = (DrawingView) findViewById(R.id.fullscreen_content);
         final DisplayMetrics dm = new DisplayMetrics();
         FullscreenActivity.getInstance().getWindowManager().getDefaultDisplay().getMetrics(dm);
-        mDrawerView.addDrawer(new DrawingView.Drawer() {
-            @Override
-            public void draw(Canvas canvas) {
-                Paint paint = new Paint();
-                paint.setColor(Color.RED);
-                for (Ball ball : world.getBalls()) {
-                    Point p = ScreenUtilitiesService.mm2pixel(ball.getPosition(), viewportOffset);
-                    canvas.drawCircle(p.x, p.y, ScreenUtilitiesService.mm2pixel(ball.getRadius().floatValue()), paint);
-                }
-            }
-        });
 
         // World drawer
         mDrawerView.addDrawer(new DrawingView.Drawer() {
@@ -284,15 +232,6 @@ public class FullscreenActivity extends Activity {
             }
         }, 0, 30);
 
-        //testTimer();
-        //testRect();
-
-        //testTheMasterMagic(true);
-
-        // testReadBroadcastedPackets();
-        // testDiscoveryAskConnexion();
-        // testDiscoveryWaitConnexion();
-
         new Thread(new ConnexionListener()).start();
     }
 
@@ -315,11 +254,11 @@ public class FullscreenActivity extends Activity {
     }
 
     private void drawWorld(Canvas canvas) {
-        // Balls are yellow
         Paint paint = new Paint();
-        paint.setColor(Color.YELLOW);
+        paint.setColor(Color.RED);
         for (Ball ball : world.getBalls()) {
-            //canvas.drawCircle(ball.getPosition().getX(), ball.getPosition().getY(), ball.getRadius(), paint);
+            Point p = ScreenUtilitiesService.mm2pixel(ball.getPosition(), viewportOffset);
+            canvas.drawCircle(p.x, p.y, ScreenUtilitiesService.mm2pixel(ball.getRadius().floatValue()), paint);
         }
     }
 
@@ -421,181 +360,6 @@ public class FullscreenActivity extends Activity {
                 }
             }
         }).start();
-    }
-
-    public void testDiscoveryWaitConnexion() {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                Context context = getApplicationContext();
-                DiscoveryService discoveryService = null;
-                try {
-                    discoveryService = new DiscoveryService(context);
-                } catch (IOException e) {
-                    return;
-                }
-
-                InetAddress masterAddress = null;
-                try {
-                    discoveryService.waitConnexion(masterAddress, 42, 1337);
-                } catch (IOException e) {
-                    return;
-                }
-            }
-        }).start();
-    }
-
-    public void testDiscoveryAskConnexion() {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                Context context = getApplicationContext();
-                DiscoveryService discoveryService = null;
-                try {
-                    discoveryService = new DiscoveryService(context);
-                } catch (IOException e) {
-                    return;
-                }
-
-                try {
-                    discoveryService.askConnexion(42, 1337);
-                } catch (IOException e) {
-                    return;
-                }
-            }
-        }).start();
-    }
-
-    public void testTheMasterMagic(boolean iAmTheMaster) {
-        int port = 4242;
-        String serverHost = "192.168.1.241";
-
-        // Setup the master
-        if (iAmTheMaster) {
-            WifiManager manager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
-            WifiInfo info = manager.getConnectionInfo();
-            Master master = new Master(port, info.getMacAddress(), ScreenUtilitiesService.buildBasePhysicalScreen());
-        } else {
-            Slave slave = new Slave();
-
-            slave.addListener("views changes", new Slave.Listener() {
-                @Override
-                public void notify(JSONObject data) {
-                    Log.d("ACTIVITY", "views changed" + data);
-                    world.updateFromJson(data);
-                }
-            });
-
-            // slave.connect(serverHost, port);
-        }
-    }
-
-    public void testReadBroadcastedPackets() {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                Context context = getApplicationContext();
-                int port = 4242;
-                BroadcastService broadcastService = null;
-                try {
-                    broadcastService = new BroadcastService(context, port);
-                } catch (IOException _) {
-                    return;
-                }
-
-                // byte[] data = {42, 13, 37, 6, 66};
-                while (true) {
-                    try {
-                        //broadcastService.send(data, data.length);
-                        byte[] data = broadcastService.receive(5);
-                        Log.d(data.toString(), "coucou");
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-        }).start();
-    }
-
-    public void testWriteBroadcastedPackets() {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                Context context = getApplicationContext();
-                int port = 4242;
-                BroadcastService broadcastService = null;
-                try {
-                    broadcastService = new BroadcastService(context, port);
-                } catch (IOException _) {
-                    return;
-                }
-
-                byte[] data = {42, 13, 37, 6, 66};
-                while (true) {
-                    try {
-                        broadcastService.send(data, data.length);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-        }).start();
-    }
-
-    void testTimer() {
-        final SyncTimer s = new SyncTimer();
-        s.startAt(System.currentTimeMillis() + 1000);
-        mDrawerView.addDrawer(new DrawingView.Drawer() {
-            @Override
-            public void draw(Canvas canvas) {
-                canvas.drawText("TIME : " + s.getRelativeTime(), 100, 100, new Paint(Color.RED));
-            }
-        });
-    }
-
-    void testRect() {
-        final ArrayList<Rect> list = new ArrayList<Rect>();
-        list.add(new Rect(10, 500, 500, 500));
-        list.add(new Rect(200, 200, 400, 400));
-        list.add(new Rect(10, 300, 500, 400));
-//        list.add(new Rect(10, 400, 500, 500));
-//        list.add(new Rect(10, 500, 500, 600));
-
-        final Edge[] ps = PolygonUtill.borderOfRectangleUnion(list.toArray(new Rect[list.size()]));
-        Random rand = new Random();
-        final ArrayList<Integer> color = new ArrayList<Integer>();
-        color.add(Color.argb(255, rand.nextInt(255), rand.nextInt(255), rand.nextInt(255)));
-        color.add(Color.argb(255, rand.nextInt(255), rand.nextInt(255), rand.nextInt(255)));
-        color.add(Color.argb(255, rand.nextInt(255), rand.nextInt(255), rand.nextInt(255)));
-        color.add(Color.argb(255, rand.nextInt(255), rand.nextInt(255), rand.nextInt(255)));
-        color.add(Color.argb(255, rand.nextInt(255), rand.nextInt(255), rand.nextInt(255)));
-        color.add(Color.argb(255, rand.nextInt(255), rand.nextInt(255), rand.nextInt(255)));
-        color.add(Color.argb(255, rand.nextInt(255), rand.nextInt(255), rand.nextInt(255)));
-        color.add(Color.argb(255, rand.nextInt(255), rand.nextInt(255), rand.nextInt(255)));
-        mDrawerView.addDrawer(new DrawingView.Drawer() {
-
-
-            @Override
-            public void draw(Canvas canvas) {
-                Paint p = new Paint();
-                for (int i = 0; i < list.size(); i++) {
-                    p.setColor(color.get(i));
-                    canvas.drawRect(list.get(i),p );
-                }
-            }
-        });
-
-        mDrawerView.addDrawer(new DrawingView.Drawer() {
-            @Override
-            public void draw(Canvas canvas) {
-                Paint paint = new Paint(Color.BLACK);
-                paint.setStrokeWidth(20f);
-                for(int i =0 ; i < ps.length; i++) {
-                    canvas.drawLine(ps[i].p1.x, ps[i].p1.y, ps[i].p2.x, ps[i].p2.y, paint);
-                }
-
-            }
-        });
     }
 
     public Master getMaster() {
