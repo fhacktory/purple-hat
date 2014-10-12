@@ -1,11 +1,11 @@
 package purplehat.fr.purplehat;
 
-import android.graphics.Point;
 import android.util.Log;
 
 import org.java_websocket.WebSocket;
 import org.java_websocket.handshake.ClientHandshake;
 import org.java_websocket.server.WebSocketServer;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
@@ -67,6 +67,20 @@ public class Master {
 
             @Override
             public void onMessage(WebSocket conn, String message) {
+                try {
+                    JSONObject obj = new JSONObject(message);
+                    try {
+                        String action = obj.getString("action");
+                        if (action.equals("create ball")) {
+                            FullscreenActivity.getInstance().addBallInWorld(Action.parseJson(obj).getBall());
+                            broadcast(obj);
+                        }
+                    } catch (JSONException e) {
+                        Log.w(LOG_TAG, "no action given");
+                    }
+                } catch (JSONException e) {
+                    Log.w(LOG_TAG, "unhandled non-json message");
+                }
             }
 
             @Override

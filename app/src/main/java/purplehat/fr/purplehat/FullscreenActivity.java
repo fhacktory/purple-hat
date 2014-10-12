@@ -197,6 +197,14 @@ public class FullscreenActivity extends Activity {
             @Override
             public void onTouchDown(int x, int y) {
                 swiping = true;
+                if (master != null || slave != null) {
+                    Action action = new Action(0.0,0.0,0.,500.,500.);
+                    if (master != null) {
+                        master.broadcast(action.getJSON());
+                    } else {
+                        slave.send(action.getJSON());
+                    }
+                }
             }
 
             @Override
@@ -371,6 +379,13 @@ public class FullscreenActivity extends Activity {
                 // world.updateFromJson(data);
             }
         });*/
+
+        slave.addListener("create ball", new Slave.Listener() {
+            @Override
+            public void notify(JSONObject data) {
+                addBallInWorld(Action.parseJson(data).getBall());
+            }
+        });
         slave.connect(masterAddress, MasterProxy.MASTER_PROXY_PORT_DE_OUF);
     }
 
@@ -378,6 +393,10 @@ public class FullscreenActivity extends Activity {
         Log.d("TG", "become master biatch");
         master = new Master(MasterProxy.MASTER_PROXY_PORT_DE_OUF, "424242", null);
         master.start();
+    }
+
+    public void addBallInWorld(Ball ball) {
+        world.getBalls().add(ball);
     }
 
     public void onExitingSwipeEvent(final int swipeX, final int swipeY) {

@@ -76,6 +76,7 @@ public class Slave {
                         if (listeners != null) {
                             for (Listener listener : listeners) {
                                 listener.notify(obj);
+
                             }
                         }
                     } catch (JSONException e) {
