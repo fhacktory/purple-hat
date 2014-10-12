@@ -1,4 +1,4 @@
-package purplehat.fr.purplehat;
+package purplehat.fr.purplehat.network;
 
 import android.content.Context;
 import android.net.DhcpInfo;

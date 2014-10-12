@@ -3,7 +3,6 @@ package purplehat.fr.purplehat;
 
 import android.app.Activity;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.LinearGradient;
@@ -20,7 +19,6 @@ import android.view.WindowManager;
 import org.json.JSONObject;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Timer;
@@ -29,53 +27,22 @@ import java.util.TimerTask;
 import purplehat.fr.purplehat.game.Ball;
 import purplehat.fr.purplehat.game.Vector2;
 import purplehat.fr.purplehat.game.World;
-import purplehat.fr.purplehat.gesturelistener.OnBackgroundTouchedListener;
-import purplehat.fr.purplehat.screen.ScreenUtilitiesService;
-import purplehat.fr.purplehat.util.SystemUiHider;
+import purplehat.fr.purplehat.network.ConnexionListener;
+import purplehat.fr.purplehat.network.DiscoveryService;
+import purplehat.fr.purplehat.utils.AddBallAction;
+import purplehat.fr.purplehat.utils.ScreenUtilitiesService;
+import purplehat.fr.purplehat.view.BgTouchListener;
 import purplehat.fr.purplehat.view.DrawingView;
 
-/**
- * An example full-screen activity that shows and hides the system UI (i.e.
- * status bar and navigation/system bar) with user interaction.
- *
- * @see SystemUiHider
- */
 public class FullscreenActivity extends Activity {
-    /**
-     * Whether or not the system UI should be auto-hidden after
-     * {@link #AUTO_HIDE_DELAY_MILLIS} milliseconds.
-     */
-    private static final boolean AUTO_HIDE = true;
-
-    /**
-     * If {@link #AUTO_HIDE} is set, the number of milliseconds to wait after
-     * user interaction before hiding the system UI.
-     */
-    private static final int AUTO_HIDE_DELAY_MILLIS = 3000;
-
-    /**
-     * If set, will toggle the system UI visibility upon interaction. Otherwise,
-     * will show the system UI visibility upon interaction.
-     */
-    private static final boolean TOGGLE_ON_CLICK = false;
-
-    /**
-     * The flags to pass to {@link SystemUiHider#getInstance}.
-     */
-    private static final int HIDER_FLAGS = SystemUiHider.FLAG_HIDE_NAVIGATION;
-
-    /**
-     * The instance of the {@link SystemUiHider} for this activity.
-     */
-    private SystemUiHider mSystemUiHider;
-    private DrawingView mDrawerView;
-    private DrawingView.DrawerThread mDrawerThread;
-
+    private static final int MASTER_PORT = 1618;
+    private static final String MASTER_ID = "424242";
     private Slave slave;
 
     private Vector2<Double> viewportOffset;
 
     private Master master;
+    private DrawingView mDrawerView;
 
     public World getWorld() {
         return world;
@@ -133,7 +100,7 @@ public class FullscreenActivity extends Activity {
             }
         });
 
-        mDrawerView.setOnTouchListener(new OnBackgroundTouchedListener(new OnBackgroundTouchedListener.InOrOutListener() {
+        mDrawerView.setOnTouchListener(new BgTouchListener(new BgTouchListener.InOrOutListener() {
             @Override
             public void onIn(int x, int y) {
                 Vector2<Double> p = ScreenUtilitiesService.pixel2mm(new Point(x, y));
@@ -145,12 +112,12 @@ public class FullscreenActivity extends Activity {
                 Vector2<Double> p = ScreenUtilitiesService.pixel2mm(new Point(x, y));
                 onExitingSwipeEvent(p.getX().intValue(), p.getY().intValue());
             }
-        }, new OnBackgroundTouchedListener.TouchListener() {
+        }, new BgTouchListener.TouchListener() {
             @Override
             public void onTouchDown(int x, int y) {
                 swiping = true;
                 if (master != null || slave != null) {
-                    Action action = new Action(0.0,0.0,0.,500.,500.);
+                    AddBallAction action = new AddBallAction(0.0,0.0,0.,500.,500.);
                     if (master != null) {
                         master.broadcast(action.getJSON());
                     } else {
@@ -165,7 +132,7 @@ public class FullscreenActivity extends Activity {
             }
 
             @Override
-            public void onTouchMove(int x, int y, OnBackgroundTouchedListener.Direction direction) {
+            public void onTouchMove(int x, int y, BgTouchListener.Direction direction) {
                 currentSwipePoint.x = x;
                 currentSwipePoint.y = y;
                 currentSwipeDirection = direction;
@@ -258,11 +225,11 @@ public class FullscreenActivity extends Activity {
         new Thread(new ConnexionListener()).start();
 
         // load bitmap
-        try {
+        /*try {
             InputStream stream = getAssets().open("purplehat-small.png");
             purpleHatBmp = BitmapFactory.decodeStream(stream);
         } catch (IOException e) {
-        }
+        }*/
     }
 
     @Override
@@ -279,7 +246,7 @@ public class FullscreenActivity extends Activity {
         }
     }
 
-    private OnBackgroundTouchedListener.Direction currentSwipeDirection;
+    private BgTouchListener.Direction currentSwipeDirection;
     Point currentSwipePoint = new Point();
     boolean swiping = false;
 
@@ -354,15 +321,15 @@ public class FullscreenActivity extends Activity {
         slave.addListener("create ball", new Slave.Listener() {
             @Override
             public void notify(JSONObject data) {
-                addBallInWorld(Action.parseJson(data).getBall());
+                addBallInWorld(AddBallAction.parseJson(data).getBall());
             }
         });
-        slave.connect(masterAddress, MasterProxy.MASTER_PROXY_PORT_DE_OUF);
+        slave.connect(masterAddress, MASTER_PORT);
     }
 
     public void becomeAMaster() {
         Log.d("TG", "become master biatch");
-        master = new Master(MasterProxy.MASTER_PROXY_PORT_DE_OUF, "424242", null);
+        master = new Master(MASTER_PORT, MASTER_ID, null);
         master.start();
     }
 

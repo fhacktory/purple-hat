@@ -1,9 +1,12 @@
-package purplehat.fr.purplehat;
+package purplehat.fr.purplehat.network;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.ServerSocket;
 import java.net.Socket;
+
+import purplehat.fr.purplehat.FullscreenActivity;
+import purplehat.fr.purplehat.PhysicalScreen;
 
 /**
  * Created by turpif on 11/10/14.

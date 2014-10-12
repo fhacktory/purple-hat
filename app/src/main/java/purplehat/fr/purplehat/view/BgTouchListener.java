@@ -1,4 +1,4 @@
-package purplehat.fr.purplehat.gesturelistener;
+package purplehat.fr.purplehat.view;
 
 import android.graphics.Point;
 import android.graphics.PointF;
@@ -6,12 +6,12 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 
-import purplehat.fr.purplehat.screen.ScreenUtilitiesService;
+import purplehat.fr.purplehat.utils.ScreenUtilitiesService;
 
 /**
  * Created by vcaen on 11/10/2014.
  */
-public class OnBackgroundTouchedListener implements View.OnTouchListener {
+public class BgTouchListener implements View.OnTouchListener {
     private static final String LOG_TAG = "BackgroundTouched";
 
     private static final int MIN_TOUCH_DISTANCE_DIRECTION = 10;
@@ -50,11 +50,11 @@ public class OnBackgroundTouchedListener implements View.OnTouchListener {
         public void onTouchMove(int x, int y, Direction direction);
     }
 
-    public OnBackgroundTouchedListener(InOrOutListener inOrOutListener) {
+    public BgTouchListener(InOrOutListener inOrOutListener) {
         this.inOrOutListener = inOrOutListener;
     }
 
-    public OnBackgroundTouchedListener(InOrOutListener inOrOutListener, TouchListener touchListener) {
+    public BgTouchListener(InOrOutListener inOrOutListener, TouchListener touchListener) {
         this(inOrOutListener);
         this.touchListener = touchListener;
     }

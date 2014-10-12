@@ -17,7 +17,8 @@ import java.util.Map;
 
 import purplehat.fr.purplehat.game.Ball;
 import purplehat.fr.purplehat.game.Vector2;
-import purplehat.fr.purplehat.screen.ScreenUtilitiesService;
+import purplehat.fr.purplehat.utils.AddBallAction;
+import purplehat.fr.purplehat.utils.ScreenUtilitiesService;
 
 /**
  * Created by jmcomets on 11/10/14.
@@ -74,7 +75,7 @@ public class Master {
                     try {
                         String action = obj.getString("action");
                         if (action.equals("create ball")) {
-                            FullscreenActivity.getInstance().addBallInWorld(Action.parseJson(obj).getBall());
+                            FullscreenActivity.getInstance().addBallInWorld(AddBallAction.parseJson(obj).getBall());
                             broadcast(obj);
                         }
                     } catch (JSONException e) {

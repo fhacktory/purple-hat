@@ -1,4 +1,4 @@
-package purplehat.fr.purplehat;
+package purplehat.fr.purplehat.network;
 
 import android.content.Context;
 import android.graphics.Point;
@@ -6,14 +6,13 @@ import android.net.wifi.WifiManager;
 
 import java.io.IOException;
 import java.net.InetAddress;
-import java.net.NetworkInterface;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.nio.ByteBuffer;
-import java.util.Timer;
 
-import purplehat.fr.purplehat.screen.ScreenUtilitiesService;
+import purplehat.fr.purplehat.FullscreenActivity;
+import purplehat.fr.purplehat.Master;
+import purplehat.fr.purplehat.utils.ScreenUtilitiesService;
 
 /**
  * Created by turpif on 11/10/14.
