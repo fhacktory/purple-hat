@@ -106,15 +106,7 @@ public class DiscoveryService {
         short width = (short) ScreenUtilitiesService.pixel2mm(new Point(ScreenUtilitiesService.getDisplayCenter().x * 2, 0)).getX().intValue();
         short height = (short) ScreenUtilitiesService.pixel2mm(new Point(0, ScreenUtilitiesService.getDisplayCenter().y * 2)).getY().intValue();
         byte[] mac = getMACAddress();
-
-        // become a slave
-        FullscreenActivity fsa = FullscreenActivity.getInstance();
-        if (fsa != null) {
-            fsa.becomeASlave(masterAddress, new String(mac, "UTF-8"));
-            waitForABit();
-        } else {
-            Log.w(LOG_TAG, "FSA is null, couldn't become a slave");
-        }
+        waitForABit();
 
         socket = new Socket(InetAddress.getByAddress(masterAddress), ConnectionListener.NEW_CONNEXION_PORT);
         socket.getOutputStream().write(mac, 0, 6);
@@ -125,6 +117,15 @@ public class DiscoveryService {
         socket.getOutputStream().write(new byte[]{(byte) (height & 0x00FF), (byte) ((height & 0xFF00) >> 8)}, 0, 2);
         socket.getOutputStream().write(new byte[]{(byte) 0}, 0, 1); // TODO direction
         socket.close();
+        waitForABit();
+
+        // become a slave
+        FullscreenActivity fsa = FullscreenActivity.getInstance();
+        if (fsa != null) {
+            fsa.becomeASlave(masterAddress, new String(mac, "UTF-8"));
+        } else {
+            Log.w(LOG_TAG, "FSA is null, couldn't become a slave");
+        }
     }
 
     private byte[] getMACAddress() {

@@ -60,6 +60,7 @@ public class Master {
             @Override
             public void onOpen(WebSocket conn, ClientHandshake handshake) {
                 Log.d(LOG_TAG, "connection opened");
+                broadcastPosition();
             }
 
             @Override
@@ -96,7 +97,6 @@ public class Master {
         Log.d(LOG_TAG, "new client, total: " + String.valueOf(screenMap.size()));
         screenMap.put(screenId, slaveScreen);
         // broadcastWorld();
-        broadcastPosition();
     }
 
     public void broadcastPosition() {
@@ -114,6 +114,7 @@ public class Master {
             }
             data.put("positions", posList);
             broadcast(data);
+            Log.d(LOG_TAG, "broadcast positions");
         } catch (JSONException e) {
             Log.e(LOG_TAG, "new screen json couldn't be constructed");
         }

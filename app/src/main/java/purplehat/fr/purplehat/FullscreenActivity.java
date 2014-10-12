@@ -70,7 +70,7 @@ public class FullscreenActivity extends Activity {
         try {
             discoveryService = new DiscoveryService(getApplicationContext());
         } catch (IOException e) {
-            Log.w(LOG_TAG, "DiscoveryService instance couldn't be instanciated");
+            Log.w(LOG_TAG, "DiscoveryService instance couldn't be instanciated", e);
         }
 
         viewportOffset = new Vector2<Double>(0.0, 0.0);
@@ -285,14 +285,18 @@ public class FullscreenActivity extends Activity {
         }
         Paint paint = new Paint();
         paint.setColor(Color.RED);
-        synchronized (world.getBalls()) {
-            for (Ball ball : world.getBalls()) {
-                Point p = ScreenUtilitiesService.mm2pixel(ball.getPosition(), viewportOffset);
-                if (purpleHatBmp == null) {
-                    canvas.drawCircle(p.x, p.y, ScreenUtilitiesService.mm2pixel(ball.getRadius().floatValue()), paint);
-                } else {
-                    canvas.drawBitmap(purpleHatBmp, p.x - (purpleHatBmp.getWidth() / 2),
-                            p.y - (purpleHatBmp.getHeight() / 2), paint);
+        synchronized (viewportOffset) {
+            synchronized (world) {
+                synchronized (world.getBalls()) {
+                    for (Ball ball : world.getBalls()) {
+                        Point p = ScreenUtilitiesService.mm2pixel(ball.getPosition(), viewportOffset);
+                        if (purpleHatBmp == null) {
+                            canvas.drawCircle(p.x, p.y, ScreenUtilitiesService.mm2pixel(ball.getRadius().floatValue()), paint);
+                        } else {
+                            canvas.drawBitmap(purpleHatBmp, p.x - (purpleHatBmp.getWidth() / 2),
+                                    p.y - (purpleHatBmp.getHeight() / 2), paint);
+                        }
+                    }
                 }
             }
         }
@@ -469,7 +473,7 @@ public class FullscreenActivity extends Activity {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                if (slave == null && master == null) {
+                if (slave == null && master == null && discoveryService != null) {
                     try {
                         discoveryService.askConnection(swipeX, swipeY);
                     } catch (IOException e) {
