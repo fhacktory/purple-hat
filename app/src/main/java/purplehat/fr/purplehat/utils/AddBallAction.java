@@ -1,4 +1,4 @@
-package purplehat.fr.purplehat;
+package purplehat.fr.purplehat.utils;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -9,7 +9,7 @@ import purplehat.fr.purplehat.game.Vector2;
 /**
  * Created by vcaen on 12/10/2014.
  */
-public class Action {
+public class AddBallAction {
 
     Double init_x;
     Double init_y;
@@ -18,7 +18,7 @@ public class Action {
     Double direction_x;
     Double direction_y;
 
-    public Action(Double init_x, Double init_y, Double mmPerMilis, Double direction_x, Double direction_y) {
+    public AddBallAction(Double init_x, Double init_y, Double mmPerMilis, Double direction_x, Double direction_y) {
         this.init_x = init_x;
         this.init_y = init_y;
         this.mmPerMilis = mmPerMilis;
@@ -41,9 +41,9 @@ public class Action {
         return json;
     }
 
-    public static Action parseJson(JSONObject json) {
+    public static AddBallAction parseJson(JSONObject json) {
         try {
-            return new Action(
+            return new AddBallAction(
             json.getDouble("direction_y"),
             json.getDouble("init_x"),
             json.getDouble("init_y"),

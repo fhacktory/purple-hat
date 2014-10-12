@@ -1,4 +1,4 @@
-package purplehat.fr.purplehat.screen;
+package purplehat.fr.purplehat.utils;
 
 import android.content.Context;
 import android.graphics.Point;

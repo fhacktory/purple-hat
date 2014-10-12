@@ -1,4 +1,4 @@
-package purplehat.fr.purplehat;
+package purplehat.fr.purplehat.network;
 
 import android.content.Context;
 import android.net.DhcpInfo;
@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 
 /**
  * Created by turpif on 11/10/14.
@@ -40,7 +41,7 @@ public class BroadcastService {
         WifiManager wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
         DhcpInfo dhcpInfo = wifiManager.getDhcpInfo();
         if (dhcpInfo == null) {
-            throw new IOException("Pas de DHCP trouvé");
+            throw new IOException("no dhcp found");
         }
 
         int broadcast = (dhcpInfo.ipAddress & dhcpInfo.netmask) | ~dhcpInfo.netmask;

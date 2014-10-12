@@ -1,4 +1,4 @@
-package purplehat.fr.purplehat.gesturelistener;
+package purplehat.fr.purplehat.view;
 
 import android.graphics.Point;
 import android.graphics.PointF;
@@ -6,14 +6,14 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 
-import purplehat.fr.purplehat.screen.ScreenUtilitiesService;
+import purplehat.fr.purplehat.utils.ScreenUtilitiesService;
 import purplehat.fr.purplehat.view.DrawingView;
 import purplehat.fr.purplehat.view.RainbowDrawer;
 
 /**
  * Created by vcaen on 11/10/2014.
  */
-public class OnBackgroundTouchedListener implements View.OnTouchListener {
+public class BgTouchListener implements View.OnTouchListener {
     private static final String LOG_TAG = "BackgroundTouched";
 
     private static final int MIN_TOUCH_DISTANCE_DIRECTION = 10;
@@ -52,11 +52,11 @@ public class OnBackgroundTouchedListener implements View.OnTouchListener {
         public void onTouchMove(int x, int y, Direction direction);
     }
 
-    public OnBackgroundTouchedListener(InOrOutListener inOrOutListener) {
+    public BgTouchListener(InOrOutListener inOrOutListener) {
         this.inOrOutListener = inOrOutListener;
     }
 
-    public OnBackgroundTouchedListener(InOrOutListener inOrOutListener, TouchListener touchListener) {
+    public BgTouchListener(InOrOutListener inOrOutListener, TouchListener touchListener) {
         this(inOrOutListener);
         this.touchListener = touchListener;
     }
@@ -103,8 +103,8 @@ public class OnBackgroundTouchedListener implements View.OnTouchListener {
         Float dist_x = Math.abs(x - origin.x);
         Float dist_y = Math.abs(y - origin.y);
 
-
         // Detect movement direction
+        Direction oldDirection = direction;
         if (dist_x > MIN_TOUCH_DISTANCE_DIRECTION && dist_y < MIN_TOUCH_DISTANCE_DIRECTION) {
             if (x > origin.x) {
                 direction = Direction.LEFT_RIGHT;
@@ -121,7 +121,10 @@ public class OnBackgroundTouchedListener implements View.OnTouchListener {
             return true;
         }
 
-        Log.d(LOG_TAG, "Direction " + ((direction != null) ? direction.name() : ""));
+        // Log direction changes only
+        if (direction != oldDirection) {
+            Log.d(LOG_TAG, "direction changed to: " + ((direction != null) ? direction.name() : ""));
+        }
 
         // Fire touch move
         touchListener.onTouchMove(x, y, direction);
@@ -179,10 +182,12 @@ public class OnBackgroundTouchedListener implements View.OnTouchListener {
 
         // Fire event for in/out
         if(inorout.equals(IO.IN)||inorout==IO.BOTH) {
+            Log.d(LOG_TAG, "detected IN");
             inOrOutListener.onIn((int) origin.x, (int) origin.y);
         }
 
         if(inorout.equals(IO.OUT)||inorout==IO.BOTH) {
+            Log.d(LOG_TAG, "detected OUT");
             inOrOutListener.onOut(x, y);
         }
     }

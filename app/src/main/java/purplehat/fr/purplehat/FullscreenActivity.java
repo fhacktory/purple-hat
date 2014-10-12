@@ -3,7 +3,6 @@ package purplehat.fr.purplehat;
 
 import android.app.Activity;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.LinearGradient;
@@ -14,13 +13,13 @@ import android.graphics.Shader;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
 import android.util.Log;
-import android.view.View;
 import android.view.WindowManager;
 
+import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Timer;
@@ -29,55 +28,27 @@ import java.util.TimerTask;
 import purplehat.fr.purplehat.game.Ball;
 import purplehat.fr.purplehat.game.Vector2;
 import purplehat.fr.purplehat.game.World;
-import purplehat.fr.purplehat.gesturelistener.OnBackgroundTouchedListener;
-import purplehat.fr.purplehat.screen.ScreenUtilitiesService;
-import purplehat.fr.purplehat.util.SystemUiHider;
+import purplehat.fr.purplehat.network.ConnectionListener;
+import purplehat.fr.purplehat.network.DiscoveryService;
+import purplehat.fr.purplehat.utils.AddBallAction;
+import purplehat.fr.purplehat.utils.ScreenUtilitiesService;
+import purplehat.fr.purplehat.view.BgTouchListener;
 import purplehat.fr.purplehat.view.DrawingView;
 import purplehat.fr.purplehat.view.RainbowDrawer;
 
-/**
- * An example full-screen activity that shows and hides the system UI (i.e.
- * status bar and navigation/system bar) with user interaction.
- *
- * @see SystemUiHider
- */
 public class FullscreenActivity extends Activity {
-    /**
-     * Whether or not the system UI should be auto-hidden after
-     * {@link #AUTO_HIDE_DELAY_MILLIS} milliseconds.
-     */
-    private static final boolean AUTO_HIDE = true;
-
-    /**
-     * If {@link #AUTO_HIDE} is set, the number of milliseconds to wait after
-     * user interaction before hiding the system UI.
-     */
-    private static final int AUTO_HIDE_DELAY_MILLIS = 3000;
-
-    /**
-     * If set, will toggle the system UI visibility upon interaction. Otherwise,
-     * will show the system UI visibility upon interaction.
-     */
-    private static final boolean TOGGLE_ON_CLICK = false;
-
-    /**
-     * The flags to pass to {@link SystemUiHider#getInstance}.
-     */
-    private static final int HIDER_FLAGS = SystemUiHider.FLAG_HIDE_NAVIGATION;
-
-    /**
-     * The instance of the {@link SystemUiHider} for this activity.
-     */
-    private SystemUiHider mSystemUiHider;
-    private DrawingView mDrawerView;
-    private DrawingView.DrawerThread mDrawerThread;
+    private static final int MASTER_PORT = 1618;
+    private static final String MASTER_ID = "424242";
     RainbowDrawer rainbowDrawer;
-
     private Slave slave;
 
     private Vector2<Double> viewportOffset;
 
     private Master master;
+    private DrawingView mDrawerView;
+    private Thread connectionListeningThread;
+    private ConnectionListener connectionListener;
+    private static final String LOG_TAG = "FULLSCREEN_ACTIVITY";
 
     public World getWorld() {
         return world;
@@ -95,21 +66,19 @@ public class FullscreenActivity extends Activity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
         instance = this;
 
         try {
             discoveryService = new DiscoveryService(getApplicationContext());
         } catch (IOException e) {
-            e.printStackTrace();
+            Log.w(LOG_TAG, "DiscoveryService instance couldn't be instanciated", e);
         }
 
         viewportOffset = new Vector2<Double>(0.0, 0.0);
 
-        super.onCreate(savedInstanceState);
-
+        // Fullscreen
         setContentView(R.layout.activity_fullscreen);
-
-        final View contentView = findViewById(R.id.fullscreen_content);
         getWindow().setFlags(
                 WindowManager.LayoutParams.FLAG_FULLSCREEN,
                 WindowManager.LayoutParams.FLAG_FULLSCREEN);
@@ -124,18 +93,19 @@ public class FullscreenActivity extends Activity {
             @Override
             public void draw(Canvas canvas) {
                 drawWorld(canvas);
-            }
-        });
-
-        // UI drawer
-        mDrawerView.addDrawer(new DrawingView.Drawer() {
-            @Override
-            public void draw(Canvas canvas) {
                 drawHUD(canvas);
             }
         });
 
-        mDrawerView.setOnTouchListener(new OnBackgroundTouchedListener(new OnBackgroundTouchedListener.InOrOutListener() {
+        // UI drawer
+        /*mDrawerView.addDrawer(new DrawingView.Drawer() {
+            @Override
+            public void draw(Canvas canvas) {
+
+            }
+        });*/
+
+        mDrawerView.setOnTouchListener(new BgTouchListener(new BgTouchListener.InOrOutListener() {
             @Override
             public void onIn(int x, int y) {
                 Vector2<Double> p = ScreenUtilitiesService.pixel2mm(new Point(x, y));
@@ -147,12 +117,12 @@ public class FullscreenActivity extends Activity {
                 Vector2<Double> p = ScreenUtilitiesService.pixel2mm(new Point(x, y));
                 onExitingSwipeEvent(p.getX().intValue(), p.getY().intValue());
             }
-        }, new OnBackgroundTouchedListener.TouchListener() {
+        }, new BgTouchListener.TouchListener() {
             @Override
             public void onTouchDown(int x, int y) {
                 swiping = true;
                 if (master != null || slave != null) {
-                    Action action = new Action(0.0, 0.0, 0., 500., 500.);
+                    AddBallAction action = new AddBallAction(0.0, 0.0, 0., 500., 500.);
                     if (master != null) {
                         master.broadcast(action.getJSON());
                     } else {
@@ -167,14 +137,12 @@ public class FullscreenActivity extends Activity {
             }
 
             @Override
-            public void onTouchMove(int x, int y, OnBackgroundTouchedListener.Direction direction) {
+            public void onTouchMove(int x, int y, BgTouchListener.Direction direction) {
                 currentSwipePoint.x = x;
                 currentSwipePoint.y = y;
                 currentSwipeDirection = direction;
             }
         }));
-
-        new Thread(new ConnexionListener()).start();
     }
 
     @Override
@@ -189,87 +157,113 @@ public class FullscreenActivity extends Activity {
                     return;
 
                 final float dt = 0.030f;
-                for (Ball ball : world.getBalls()) {
-                    Vector2<Double> om = ball.getPosition();
-                    Vector2<Double> vel = ball.getVelocity();
-                    Vector2<Double> dom = new Vector2<Double>(vel.getX() * dt, vel.getY() * dt);
-                    om.setX(om.getX() + dom.getX());
-                    om.setY(om.getY() + dom.getY());
+                synchronized (world.getBalls()) {
+                    for (Ball ball : world.getBalls()) {
+                        double oldX = ball.getPosition().getX();
+                        double oldY = ball.getPosition().getY();
+                        Vector2<Double> om = ball.getPosition();
+                        Vector2<Double> vel = ball.getVelocity();
+                        Vector2<Double> dom = new Vector2<Double>(vel.getX() * dt, vel.getY() * dt);
+                        om.setX(om.getX() + dom.getX());
+                        om.setY(om.getY() + dom.getY());
 
-                    if (master != null) {
-                        boolean inWorld = false;
-                        for (PhysicalScreen screen : master.getScreenMap().values()) {
+                        if (master != null) {
+                            boolean inWorld = false;
+                            // Log.d("nbr", "" + master.getScreenMap().size());
+                            PhysicalScreen container = null;
+                            for (PhysicalScreen screen : master.getScreenMap().values()) {
+                                // Log.d("xy", "" + screen.getX1() + " ; " + screen.getY1() + " -> " + screen.getX2() + " ; " + screen.getY2());
+                                if (om.getX() >= screen.getX1()
+                                        && om.getX() <= screen.getX2()
+                                        && om.getY() >= screen.getY1()
+                                        && om.getY() <= screen.getY2()) {
+                                    inWorld = true;
+                                    break;
+                                }
+                                if (oldX >= screen.getX1()
+                                        && oldX <= screen.getX2()
+                                        && oldY >= screen.getY1()
+                                        && oldY <= screen.getY2()) {
+                                    container = screen;
+                                }
+                            }
+
+                            if (!inWorld) {
+                                PhysicalScreen screen;
+                                if (container == null) {
+                                    screen = ScreenUtilitiesService.buildBasePhysicalScreen();
+                                } else {
+                                    screen = container;
+                                }
+
+                                if (om.getX() < screen.getX1()) {
+                                    om.setX(screen.getX1());
+                                    ball.getVelocity().setX(-ball.getVelocity().getX());
+                                } else if (om.getX() > screen.getX2()) {
+                                    om.setX(screen.getX2());
+                                    ball.getVelocity().setX(-ball.getVelocity().getX());
+                                } else if (om.getY() < screen.getY1()) {
+                                    om.setY(screen.getY1());
+                                    ball.getVelocity().setY(-ball.getVelocity().getY());
+                                } else if (om.getY() > screen.getY2()) {
+                                    om.setY(screen.getY2());
+                                    ball.getVelocity().setY(-ball.getVelocity().getY());
+                                }
+                            }
+                        } else if (master == null && slave == null) {
+                            boolean inWorld = false;
+                            PhysicalScreen screen = ScreenUtilitiesService.buildBasePhysicalScreen();
                             if (om.getX() >= screen.getX1()
                                     && om.getX() <= screen.getX2()
                                     && om.getY() >= screen.getY1()
                                     && om.getY() <= screen.getY2()) {
                                 inWorld = true;
-                                break;
+                            }
+
+                            if (!inWorld) {
+                                if (om.getX() < screen.getX1()) {
+                                    om.setX(screen.getX1());
+                                    ball.getVelocity().setX(-ball.getVelocity().getX());
+                                } else if (om.getX() > screen.getX2()) {
+                                    om.setX(screen.getX2());
+                                    ball.getVelocity().setX(-ball.getVelocity().getX());
+                                } else if (om.getY() < screen.getY1()) {
+                                    om.setY(screen.getY1());
+                                    ball.getVelocity().setY(-ball.getVelocity().getY());
+                                } else if (om.getY() > screen.getY2()) {
+                                    om.setY(screen.getY2());
+                                    ball.getVelocity().setY(-ball.getVelocity().getY());
+                                }
                             }
                         }
 
-                        if (!inWorld) {
-                            PhysicalScreen screen = ScreenUtilitiesService.buildBasePhysicalScreen();
-                            if (om.getX() < screen.getX1()) {
-                                om.setX(screen.getX1());
-                                ball.getVelocity().setX(-ball.getVelocity().getX());
-                            } else if (om.getX() > screen.getX2()) {
-                                om.setX(screen.getX2());
-                                ball.getVelocity().setX(-ball.getVelocity().getX());
-                            } else if (om.getY() < screen.getY1()) {
-                                om.setY(screen.getY1());
-                                ball.getVelocity().setY(-ball.getVelocity().getY());
-                            } else if (om.getY() > screen.getY2()) {
-                                om.setY(screen.getY2());
-                                ball.getVelocity().setY(-ball.getVelocity().getY());
-                            }
-                        }
-                    } else if (master == null && slave == null) {
-                        boolean inWorld = false;
-                        PhysicalScreen screen = ScreenUtilitiesService.buildBasePhysicalScreen();
-                        if (om.getX() >= screen.getX1()
-                                && om.getX() <= screen.getX2()
-                                && om.getY() >= screen.getY1()
-                                && om.getY() <= screen.getY2()) {
-                            inWorld = true;
-                        }
-
-                        if (!inWorld) {
-                            if (om.getX() < screen.getX1()) {
-                                om.setX(screen.getX1());
-                                ball.getVelocity().setX(-ball.getVelocity().getX());
-                            } else if (om.getX() > screen.getX2()) {
-                                om.setX(screen.getX2());
-                                ball.getVelocity().setX(-ball.getVelocity().getX());
-                            } else if (om.getY() < screen.getY1()) {
-                                om.setY(screen.getY1());
-                                ball.getVelocity().setY(-ball.getVelocity().getY());
-                            } else if (om.getY() > screen.getY2()) {
-                                om.setY(screen.getY2());
-                                ball.getVelocity().setY(-ball.getVelocity().getY());
-                            }
-                        }
+                        ball.setPosition(om);
                     }
-
-                    ball.setPosition(om);
                 }
             }
         }, 0, 30);
 
         // start connexion listener
-        new Thread(new ConnexionListener()).start();
+        connectionListener = new ConnectionListener();
+        connectionListeningThread = new Thread(connectionListener);
+        connectionListeningThread.start();
 
         // load bitmap
-        try {
+        /*try {
             InputStream stream = getAssets().open("purplehat-small.png");
             purpleHatBmp = BitmapFactory.decodeStream(stream);
         } catch (IOException e) {
-        }
+        }*/
     }
 
     @Override
     protected void onStop() {
         super.onStop();
+
+        // Stop listening (brutally)
+        connectionListeningThread.interrupt();
+
+        // Join master/slave
         if (master != null) {
             try {
                 master.stop();
@@ -281,7 +275,7 @@ public class FullscreenActivity extends Activity {
         }
     }
 
-    private OnBackgroundTouchedListener.Direction currentSwipeDirection;
+    private BgTouchListener.Direction currentSwipeDirection;
     Point currentSwipePoint = new Point();
     boolean swiping = false;
 
@@ -295,21 +289,23 @@ public class FullscreenActivity extends Activity {
         }
         Paint paint = new Paint();
         paint.setColor(Color.RED);
-        for (Ball ball : world.getBalls()) {
+        synchronized (world.getBalls()) {
+            for (Ball ball : world.getBalls()) {
             if(firstDraw) {
                 ball.setRainbowDrawer(new RainbowDrawer(this));
                 mDrawerView.addDrawer(ball.getRainbowDrawer());
             }
-            Point p = ScreenUtilitiesService.mm2pixel(ball.getPosition(), viewportOffset);
+                Point p = ScreenUtilitiesService.mm2pixel(ball.getPosition(), viewportOffset);
             ball.getRainbowDrawer().setXY(p.x,p.y);
-            if (purpleHatBmp == null) {
-                canvas.drawCircle(p.x, p.y, ScreenUtilitiesService.mm2pixel(ball.getRadius().floatValue()), paint);
-            } else {
-                canvas.drawBitmap(purpleHatBmp, p.x - (purpleHatBmp.getWidth() / 2),
-                        p.y - (purpleHatBmp.getHeight() / 2), paint);
+                if (purpleHatBmp == null) {
+                    canvas.drawCircle(p.x, p.y, ScreenUtilitiesService.mm2pixel(ball.getRadius().floatValue()), paint);
+                } else {
+                    canvas.drawBitmap(purpleHatBmp, p.x - (purpleHatBmp.getWidth() / 2),
+                            p.y - (purpleHatBmp.getHeight() / 2), paint);
+                }
             }
-        }
         firstDraw = false;
+        }
     }
 
     private void drawHUD(Canvas canvas) {
@@ -320,89 +316,162 @@ public class FullscreenActivity extends Activity {
             Shader shader = null;
 
             switch (currentSwipeDirection) {
-                case UP_DOWN:
+                case DOWN_UP:
+                    rect = new Rect(0, (int) (0.15f * (float) ScreenUtilitiesService.getHeight()),
+                            ScreenUtilitiesService.getWidth(), 0);
+                    shader = new LinearGradient(rect.left, 0.15f * (float) ScreenUtilitiesService.getHeight(),
+                            rect.left, 0,
+                            Color.TRANSPARENT, Color.rgb(125 - (int) ((1 - currentSwipePoint.y * 1.0 / ScreenUtilitiesService.getHeight()) * 125),
+                            125 - (int) ((1 - currentSwipePoint.y * 1.0 / ScreenUtilitiesService.getHeight()) * 125),
+                            125 - (int) ((1 - currentSwipePoint.y * 1.0 / ScreenUtilitiesService.getHeight()) * 125)), Shader.TileMode.CLAMP);
                     break;
 
-                case DOWN_UP:
+                case UP_DOWN:
+                    rect = new Rect(0, (int) (0.85f * (float) ScreenUtilitiesService.getHeight()),
+                            ScreenUtilitiesService.getWidth(), ScreenUtilitiesService.getHeight());
+                    shader = new LinearGradient(rect.left, 0.85f * (float) ScreenUtilitiesService.getHeight(),
+                            rect.left, ScreenUtilitiesService.getHeight(),
+                            Color.TRANSPARENT, Color.rgb(125 - (int) ((currentSwipePoint.y * 1.0 / ScreenUtilitiesService.getHeight()) * 125),
+                            125 - (int) ((currentSwipePoint.y * 1.0 / ScreenUtilitiesService.getHeight()) * 125),
+                            125 - (int) ((currentSwipePoint.y * 1.0 / ScreenUtilitiesService.getHeight()) * 125)), Shader.TileMode.CLAMP);
                     break;
 
                 case LEFT_RIGHT:
                     rect = new Rect((int) (0.85f * (float) ScreenUtilitiesService.getWidth()),  0,
                             ScreenUtilitiesService.getWidth(), ScreenUtilitiesService.getHeight());
-                    shader = new LinearGradient(ScreenUtilitiesService.getWidth() - currentSwipePoint.x / 2, rect.top,
+                    shader = new LinearGradient(0.85f * (float) ScreenUtilitiesService.getWidth(), rect.top,
                             ScreenUtilitiesService.getWidth(), rect.top,
-                            Color.WHITE, Color.BLACK, Shader.TileMode.CLAMP);
+                            Color.TRANSPARENT, Color.rgb(125 - (int) ((currentSwipePoint.x * 1.0 / ScreenUtilitiesService.getWidth()) * 125),
+                            125 - (int) ((currentSwipePoint.x * 1.0 / ScreenUtilitiesService.getWidth()) * 125),
+                            125 - (int) ((currentSwipePoint.x * 1.0 / ScreenUtilitiesService.getWidth()) * 125)), Shader.TileMode.CLAMP);
                     break;
 
                 case RIGHT_LEFT:
                     rect = new Rect(0, 0,
                             (int) (0.15f * (float) ScreenUtilitiesService.getWidth()), ScreenUtilitiesService.getHeight());
-                    shader = new LinearGradient(currentSwipePoint.x / 2, rect.top,
+                    shader = new LinearGradient(0.15f * (float) ScreenUtilitiesService.getWidth(), rect.top,
                             0, rect.top,
-                            Color.WHITE, Color.BLACK, Shader.TileMode.CLAMP);
+                            Color.TRANSPARENT, Color.rgb(125 - (int) ((1 - currentSwipePoint.x * 1.0 / ScreenUtilitiesService.getWidth()) * 125),
+                            125 - (int) ((1 - currentSwipePoint.x * 1.0 / ScreenUtilitiesService.getWidth()) * 125),
+                            125 - (int) ((1 - currentSwipePoint.x * 1.0 / ScreenUtilitiesService.getWidth()) * 125)), Shader.TileMode.CLAMP);
                     break;
             }
 
-            /*if (rect != null && shader != null) {
+            if (rect != null && shader != null) {
                 paint.setShader(shader);
                 canvas.drawRect(rect, paint);
-            }*/
+            }
         }
     }
 
-    public void becomeASlave(byte[] masterAddress) {
-        Log.d("TG", "become slave biatch");
-        slave = new Slave();
-        /*slave.addListener("world:virtual:updated", new Slave.Listener() {
-            @Override
-            public void notify(JSONObject data) {
-                Log.d("ACTIVITY", "world:updated" + data);
-                // world.updateFromJson(data);
-            }
-        });*/
+    public void becomeASlave(byte[] masterAddress, String id) {
+        Log.d(LOG_TAG, "become a slave");
+        slave = new Slave(id);
 
         slave.addListener("create ball", new Slave.Listener() {
             @Override
             public void notify(JSONObject data) {
-                addBallInWorld(Action.parseJson(data).getBall());
+                addBallInWorld(AddBallAction.parseJson(data).getBall());
             }
         });
-        slave.connect(masterAddress, MasterProxy.MASTER_PROXY_PORT_DE_OUF);
+
+        slave.addListener("world:position", new Slave.Listener() {
+            @Override
+            public void notify(JSONObject data) {
+                try {
+                    JSONArray posList = data.getJSONArray("positions");
+                    for (int i = 0; i < posList.length(); i++) {
+                        JSONObject posData = posList.getJSONObject(i);
+                        String id = posData.getString("id");
+                        if (id.equals(slave.getId())) {
+                            double posX = posData.getDouble("dx");
+                            double posY = posData.getDouble("dy");
+                            viewportOffset.setX(posX);
+                            viewportOffset.setY(posY);
+                            Log.d("LoL", "maj viewport");
+                            break;
+                        }
+                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
+        slave.addListener("world:balls", new Slave.Listener() {
+            @Override
+            public void notify(JSONObject data) {
+                try {
+                    JSONArray balls = data.getJSONArray("balls");
+                    synchronized (world.getBalls()) {
+                        world.getBalls().clear();
+                        for (int i = 0; i < balls.length(); i++) {
+                            JSONObject ballData = balls.getJSONObject(i);
+                            double x = ballData.getDouble("x");
+                            double y = ballData.getDouble("y");
+                            double vx = ballData.getDouble("vx");
+                            double vy = ballData.getDouble("vy");
+                            double r = ballData.getDouble("r");
+                            Ball ball = new Ball(new Vector2<Double>(x, y), r);
+                            ball.setVelocity(new Vector2<Double>(vx, vy));
+                            world.getBalls().add(ball);
+                        }
+                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
+        // connect to master
+        slave.connect(masterAddress, MASTER_PORT);
     }
 
     public void becomeAMaster() {
-        Log.d("TG", "become master biatch");
-        master = new Master(MasterProxy.MASTER_PROXY_PORT_DE_OUF, "424242", null);
+        Log.d(LOG_TAG, "becoming a master");
+        master = new Master(MASTER_PORT, MASTER_ID, null);
         master.start();
+
+        Timer updateWorldTimer = new Timer();
+        updateWorldTimer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                master.broadcastWorld();
+            }
+        }, 0, 30);
     }
 
     public void addBallInWorld(Ball ball) {
-        world.getBalls().add(ball);
+        synchronized (world.getBalls()) {
+            world.getBalls().add(ball);
+        }
     }
 
     public void onExitingSwipeEvent(final int swipeX, final int swipeY) {
         new Thread(new Runnable() {
             @Override
             public void run() {
+                // figure out the master's address
                 InetAddress masterAddress = null;
                 if (master != null) {
                     try {
                         masterAddress = discoveryService.getLocalIp();
                     } catch (UnknownHostException e) {
-                        e.printStackTrace();
                     }
-                }
-                if (slave != null) {
+                } else if (slave != null) {
                     try {
                         masterAddress = InetAddress.getByAddress(slave.getMasterAddress());
                     } catch (UnknownHostException e) {
-                        e.printStackTrace();
                     }
                 }
+
+                // start discovering
                 try {
-                    discoveryService.waitConnexion(masterAddress, swipeX, swipeY);
+                    if (discoveryService != null) {
+                        discoveryService.waitConnection(masterAddress, swipeX, swipeY);
+                    }
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    Log.w(LOG_TAG, "discovery (waitConnection) interrupted", e);
                 }
             }
         }).start();
@@ -412,11 +481,11 @@ public class FullscreenActivity extends Activity {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                if (slave == null && master == null) {
+                if (slave == null && master == null && discoveryService != null) {
                     try {
-                        discoveryService.askConnexion(swipeX, swipeY);
+                        discoveryService.askConnection(swipeX, swipeY);
                     } catch (IOException e) {
-                        e.printStackTrace();
+                        Log.w(LOG_TAG, "discovery (askConnection) interrupted", e);
                     }
                 }
             }

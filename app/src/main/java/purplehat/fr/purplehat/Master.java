@@ -17,13 +17,14 @@ import java.util.Map;
 
 import purplehat.fr.purplehat.game.Ball;
 import purplehat.fr.purplehat.game.Vector2;
-import purplehat.fr.purplehat.screen.ScreenUtilitiesService;
+import purplehat.fr.purplehat.utils.AddBallAction;
+import purplehat.fr.purplehat.utils.ScreenUtilitiesService;
 
 /**
  * Created by jmcomets on 11/10/14.
  */
 public class Master {
-    private static final String LOG_TAG = "MASTER_CLIENT";
+    private static final String LOG_TAG = "MASTER";
 
     private PhysicalScreen baseScreen;
     private String screenId;
@@ -59,7 +60,7 @@ public class Master {
             @Override
             public void onOpen(WebSocket conn, ClientHandshake handshake) {
                 Log.d(LOG_TAG, "connection opened");
-                // TODO send position
+                broadcastPosition();
             }
 
             @Override
@@ -74,8 +75,8 @@ public class Master {
                     try {
                         String action = obj.getString("action");
                         if (action.equals("create ball")) {
-                            FullscreenActivity.getInstance().addBallInWorld(Action.parseJson(obj).getBall());
-                            broadcast(obj);
+                            /*FullscreenActivity.getInstance().addBallInWorld(AddBallAction.parseJson(obj).getBall());
+                            broadcast(obj);*/
                         }
                     } catch (JSONException e) {
                         Log.w(LOG_TAG, "no action given");
@@ -93,9 +94,30 @@ public class Master {
     }
 
     public void addSlaveScreen(String screenId, PhysicalScreen slaveScreen) {
-        Log.d(LOG_TAG, "Nombre de client : " + String.valueOf(screenMap.size()));
+        Log.d(LOG_TAG, "new client, total: " + String.valueOf(screenMap.size()));
         screenMap.put(screenId, slaveScreen);
         // broadcastWorld();
+    }
+
+    public void broadcastPosition() {
+        try {
+            JSONObject data = new JSONObject();
+            data.put("action", "world:position");
+            JSONArray posList = new JSONArray();
+            for (Map.Entry<String, PhysicalScreen> entry : screenMap.entrySet()) {
+                PhysicalScreen screen = entry.getValue();
+                JSONObject screenData = new JSONObject();
+                screenData.put("id", entry.getKey());
+                screenData.put("dx", screen.getX1());
+                screenData.put("dy", screen.getY1());
+                posList.put(screenData);
+            }
+            data.put("positions", posList);
+            broadcast(data);
+            Log.d(LOG_TAG, "broadcast positions");
+        } catch (JSONException e) {
+            Log.e(LOG_TAG, "new screen json couldn't be constructed");
+        }
     }
 
     public void broadcastWorld() {
@@ -103,14 +125,16 @@ public class Master {
             JSONObject data = new JSONObject();
             data.put("action", "world:balls");
             JSONArray ballList = new JSONArray();
-            for (Ball ball : FullscreenActivity.getInstance().getWorld().getBalls()) {
-                JSONObject ballData = new JSONObject();
-                ballData.put("x", ball.getPosition().getX());
-                ballData.put("y", ball.getPosition().getY());
-                ballData.put("vx", ball.getVelocity().getX());
-                ballData.put("vx", ball.getVelocity().getY());
-                ballData.put("r", ball.getRadius());
-                ballList.put(ballData);
+            synchronized (FullscreenActivity.getInstance().getWorld()) {
+                for (Ball ball : FullscreenActivity.getInstance().getWorld().getBalls()) {
+                    JSONObject ballData = new JSONObject();
+                    ballData.put("x", ball.getPosition().getX());
+                    ballData.put("y", ball.getPosition().getY());
+                    ballData.put("vx", ball.getVelocity().getX());
+                    ballData.put("vy", ball.getVelocity().getY());
+                    ballData.put("r", ball.getRadius());
+                    ballList.put(ballData);
+                }
             }
             data.put("balls", ballList);
             broadcast(data);
