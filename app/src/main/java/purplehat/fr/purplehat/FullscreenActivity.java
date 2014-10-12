@@ -29,7 +29,7 @@ import purplehat.fr.purplehat.Geometrics.Edge;
 import purplehat.fr.purplehat.game.Ball;
 import purplehat.fr.purplehat.game.Rect2;
 import purplehat.fr.purplehat.Geometrics.PolygonUtill;
-import purplehat.fr.purplehat.game.Rect2;
+import purplehat.fr.purplehat.game.Ball;
 import purplehat.fr.purplehat.game.World;
 import purplehat.fr.purplehat.gesturelistener.OnBackgroundTouchedListener;
 import purplehat.fr.purplehat.screen.ScreenUtilitiesService;
@@ -76,10 +76,6 @@ public class FullscreenActivity extends Activity {
     private Slave slave;
 
     private Point viewportOffset;
-
-    public Master getMaster() {
-        return master;
-    }
 
     private Master master;
 
@@ -172,6 +168,22 @@ public class FullscreenActivity extends Activity {
             }
         });
 
+        // World drawer
+        mDrawerView.addDrawer(new DrawingView.Drawer() {
+            @Override
+            public void draw(Canvas canvas) {
+                drawWorld(canvas);
+            }
+        });
+
+        // UI drawer
+        mDrawerView.addDrawer(new DrawingView.Drawer() {
+            @Override
+            public void draw(Canvas canvas) {
+                drawHUD(canvas);
+            }
+        });
+
         mDrawerView.setOnTouchListener(new OnBackgroundTouchedListener(new OnBackgroundTouchedListener.InOrOutListener() {
             @Override
             public void onIn(int x, int y) {
@@ -181,6 +193,22 @@ public class FullscreenActivity extends Activity {
             @Override
             public void onOut(int x, int y) {
                 onExitingSwipeEvent(x, y);
+            }
+        }, new OnBackgroundTouchedListener.TouchListener() {
+            @Override
+            public void onTouchDown(int x, int y) {
+                swiping = true;
+            }
+
+            @Override
+            public void onTouchUp(int x, int y) {
+                swiping = false;
+            }
+
+            @Override
+            public void onTouchMove(int x, int y) {
+                currentSwipePoint.x = x;
+                currentSwipePoint.y = y;
             }
         }));
 
@@ -196,12 +224,43 @@ public class FullscreenActivity extends Activity {
         new Thread(new ConnexionListener()).start();
     }
 
-    @Override
-    protected void onPostCreate(Bundle savedInstanceState) {
-        super.onPostCreate(savedInstanceState);
+    Point currentSwipePoint = new Point();
+    boolean swiping = false;
 
-        //onExitingSwipeEvent(42, 42);
-        //onEntrantSwipeEvent(42, 42);
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if (master != null) {
+            try {
+                master.stop();
+            } catch (IOException e) {
+            } catch (InterruptedException e) {
+            }
+        } else if (slave != null) {
+            slave.close();
+        }
+    }
+
+    private void drawWorld(Canvas canvas) {
+        // Balls are yellow
+        Paint paint = new Paint();
+        paint.setColor(Color.YELLOW);
+        for (Ball ball : world.getBalls()) {
+            //canvas.drawCircle(ball.getPosition().getX(), ball.getPosition().getY(), ball.getRadius(), paint);
+        }
+    }
+
+    private void drawHUD(Canvas canvas) {
+        if (swiping) {
+            Paint paint = new Paint(Color.BLACK);
+            paint.setStrokeWidth(10);
+            canvas.drawLine(0, currentSwipePoint.y,
+                    ScreenUtilitiesService.getWidth(), currentSwipePoint.y,
+                    paint);
+            canvas.drawLine(currentSwipePoint.x, 0,
+                    currentSwipePoint.x, ScreenUtilitiesService.getHeight(),
+                    paint);
+        }
     }
 
     public void becomeASlave(byte[] masterAddress) {
@@ -333,8 +392,6 @@ public class FullscreenActivity extends Activity {
         }
     }
 
-
-
     public void testReadBroadcastedPackets() {
         new Thread(new Runnable() {
             @Override
@@ -443,22 +500,7 @@ public class FullscreenActivity extends Activity {
         });
     }
 
-    @Override
-    protected void onStop() {
-        super.onStop();
-        /*if (master != null) {
-            try {
-                master.stop();
-            } catch (IOException e) {
-                e.printStackTrace();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-        if (slave != null) {
-            slave.close();
-        }*/
+    public Master getMaster() {
+        return master;
     }
 }
-
-
