@@ -467,7 +467,9 @@ public class FullscreenActivity extends Activity {
                     }
                 }
                 try {
-                    discoveryService.waitConnexion(masterAddress, swipeX, swipeY);
+                    if (discoveryService != null) {
+                        discoveryService.waitConnexion(masterAddress, swipeX, swipeY);
+                    }
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
