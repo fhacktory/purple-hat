@@ -22,7 +22,7 @@ public class World {
 
         Ball ball = new Ball();
         ball.setPosition(new Vector2<Double>(30.0, 40.0));
-        ball.setRadius(20.0);
+        ball.setRadius(10.0);
         balls.add(ball);
     }
 

@@ -25,11 +25,14 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Random;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import purplehat.fr.purplehat.game.Ball;
 import purplehat.fr.purplehat.game.Rect2;
 import purplehat.fr.purplehat.Geometrics.PolygonUtill;
 import purplehat.fr.purplehat.game.Rect2;
+import purplehat.fr.purplehat.game.Vector2;
 import purplehat.fr.purplehat.game.World;
 import purplehat.fr.purplehat.gesturelistener.OnBackgroundTouchedListener;
 import purplehat.fr.purplehat.screen.ScreenUtilitiesService;
@@ -75,7 +78,7 @@ public class FullscreenActivity extends Activity {
 
     private Slave slave;
 
-    private Point viewportOffset;
+    private Vector2<Double> viewportOffset;
 
     public Master getMaster() {
         return master;
@@ -102,7 +105,7 @@ public class FullscreenActivity extends Activity {
             e.printStackTrace();
         }
 
-        viewportOffset = new Point(0, 0);
+        viewportOffset = new Vector2<Double>(0.0, 0.0);
 
         super.onCreate(savedInstanceState);
 
@@ -163,10 +166,7 @@ public class FullscreenActivity extends Activity {
                 Paint paint = new Paint();
                 paint.setColor(Color.YELLOW);
                 for (Ball ball : world.getBalls()) {
-                    Point p = ScreenUtilitiesService.mm2pixel(new Point(ball.getPosition().getX().intValue(),
-                            ball.getPosition().getY().intValue()),
-                            viewportOffset);
-
+                    Point p = ScreenUtilitiesService.mm2pixel(ball.getPosition(), viewportOffset);
                     canvas.drawCircle(p.x, p.y, ScreenUtilitiesService.mm2pixel(ball.getRadius().floatValue()), paint);
                 }
             }
@@ -183,6 +183,21 @@ public class FullscreenActivity extends Activity {
                 onExitingSwipeEvent(x, y);
             }
         }));
+
+        Timer animationTimer = new Timer();
+        animationTimer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                final float dt = 0.001f;
+                for (Ball ball : world.getBalls()) {
+                    Vector2<Double> om = ball.getPosition();
+                    Vector2<Double> vel = ball.getVelocity();
+                    om.setX(om.getX() + vel.getX() * dt);
+                    om.setY(om.getY() + vel.getY() * dt);
+                    ball.setPosition(om);
+                }
+            }
+        }, 0, 1);
 
         //testTimer();
         //testRect();

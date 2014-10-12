@@ -61,8 +61,8 @@ public class ConnexionListener implements Runnable {
                     if (screen == null) {
                         return;
                     }
-                    int x = dx + screen.getX1();
-                    int y = dy + screen.getY1();
+                    double x = dx + screen.getX1();
+                    double y = dy + screen.getY1();
                     FullscreenActivity.getInstance().getMaster().addSlaveScreen(strNewDeviceIdentifier, new PhysicalScreen(x, y, x + width, y + height));
                 }
             }

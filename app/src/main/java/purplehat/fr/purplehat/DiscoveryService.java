@@ -107,8 +107,8 @@ public class DiscoveryService {
         int externY = gesturePosition[2] + (int) gesturePosition[3] << 8;
         int dx = swipeX - externX;
         int dy = swipeY - externY;
-        int width = ScreenUtilitiesService.pixel2mm(new Point(ScreenUtilitiesService.getDisplayCenter().x * 2, 0)).x;
-        int height = ScreenUtilitiesService.pixel2mm(new Point(0, ScreenUtilitiesService.getDisplayCenter().y * 2)).y;
+        int width = ScreenUtilitiesService.pixel2mm(new Point(ScreenUtilitiesService.getDisplayCenter().x * 2, 0)).getX().intValue();
+        int height = ScreenUtilitiesService.pixel2mm(new Point(0, ScreenUtilitiesService.getDisplayCenter().y * 2)).getY().intValue();
         byte[] mac = getMACAddress();
 
         FullscreenActivity.getInstance().becomeASlave(masterAddress);
