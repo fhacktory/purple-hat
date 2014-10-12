@@ -115,7 +115,7 @@ public class DiscoveryService {
         short height = (short) ScreenUtilitiesService.pixel2mm(new Point(0, ScreenUtilitiesService.getDisplayCenter().y * 2)).getY().intValue();
         byte[] mac = getMACAddress();
 
-        FullscreenActivity.getInstance().becomeASlave(masterAddress);
+        FullscreenActivity.getInstance().becomeASlave(masterAddress, new String(mac, "UTF-8"));
         try {
             Thread.sleep(500);
         } catch (InterruptedException _) {

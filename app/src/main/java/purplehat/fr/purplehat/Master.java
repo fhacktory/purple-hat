@@ -96,6 +96,27 @@ public class Master {
         Log.d(LOG_TAG, "Nombre de client : " + String.valueOf(screenMap.size()));
         screenMap.put(screenId, slaveScreen);
         // broadcastWorld();
+        broadcastPosition();
+    }
+
+    public void broadcastPosition() {
+        try {
+            JSONObject data = new JSONObject();
+            data.put("action", "world:position");
+            JSONArray posList = new JSONArray();
+            for (Map.Entry<String, PhysicalScreen> entry : screenMap.entrySet()) {
+                PhysicalScreen screen = entry.getValue();
+                JSONObject screenData = new JSONObject();
+                screenData.put("id", entry.getKey());
+                screenData.put("dx", screen.getX1());
+                screenData.put("dy", screen.getY1());
+                posList.put(screenData);
+            }
+            data.put("positions", posList);
+            broadcast(data);
+        } catch (JSONException e) {
+            Log.e(LOG_TAG, "new screen json couldn't be constructed");
+        }
     }
 
     public void broadcastWorld() {

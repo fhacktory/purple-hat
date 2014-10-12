@@ -15,6 +15,8 @@ import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
 
+import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
@@ -260,7 +262,9 @@ public class FullscreenActivity extends Activity {
 
                     if (master != null) {
                         boolean inWorld = false;
+                        Log.d("nbr", "" + master.getScreenMap().size());
                         for (PhysicalScreen screen : master.getScreenMap().values()) {
+                            Log.d("xy", "" + screen.getX1() + " ; " + screen.getY1() + " -> " + screen.getX2() + " ; " + screen.getY2());
                             if (om.getX() >= screen.getX1()
                                     && om.getX() <= screen.getX2()
                                     && om.getY() >= screen.getY1()
@@ -319,9 +323,9 @@ public class FullscreenActivity extends Activity {
         }, 0, 30);
     }
 
-    public void becomeASlave(byte[] masterAddress) {
+    public void becomeASlave(byte[] masterAddress, String id) {
         Log.d("TG", "become slave biatch");
-        slave = new Slave();
+        slave = new Slave(id);
         /*slave.addListener("world:virtual:updated", new Slave.Listener() {
             @Override
             public void notify(JSONObject data) {
@@ -334,6 +338,28 @@ public class FullscreenActivity extends Activity {
             @Override
             public void notify(JSONObject data) {
                 addBallInWorld(Action.parseJson(data).getBall());
+            }
+        });
+        slave.addListener("world:position", new Slave.Listener() {
+            @Override
+            public void notify(JSONObject data) {
+                try {
+                    JSONArray posList = data.getJSONArray("positions");
+                    for (int i = 0; i < posList.length(); i++) {
+                        JSONObject posData = posList.getJSONObject(i);
+                        String id = posData.getString("id");
+                        if (id.equals(slave.getId())) {
+                            double posX = posData.getDouble("dx");
+                            double posY = posData.getDouble("dy");
+                            viewportOffset.setX(posX);
+                            viewportOffset.setY(posY);
+                            Log.d("LoL", "maj viewport");
+                            break;
+                        }
+                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
             }
         });
         slave.connect(masterAddress, MasterProxy.MASTER_PROXY_PORT_DE_OUF);

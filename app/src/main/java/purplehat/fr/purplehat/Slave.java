@@ -32,9 +32,16 @@ public class Slave {
     private WebSocketClient client;
     private Map<String, Collection<Listener>> allListeners;
 
+    public String getId() {
+        return id;
+    }
+
+    private String id;
+
     private byte[] masterAddress = null;
 
-    public Slave() {
+    public Slave(String id) {
+        this.id = id;
         allListeners = new HashMap<String, Collection<Listener>>();
     }
 
