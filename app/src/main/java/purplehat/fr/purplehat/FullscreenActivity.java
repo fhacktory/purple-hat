@@ -164,7 +164,7 @@ public class FullscreenActivity extends Activity {
             @Override
             public void draw(Canvas canvas) {
                 Paint paint = new Paint();
-                paint.setColor(Color.YELLOW);
+                paint.setColor(Color.RED);
                 for (Ball ball : world.getBalls()) {
                     Point p = ScreenUtilitiesService.mm2pixel(ball.getPosition(), viewportOffset);
                     canvas.drawCircle(p.x, p.y, ScreenUtilitiesService.mm2pixel(ball.getRadius().floatValue()), paint);
@@ -188,16 +188,73 @@ public class FullscreenActivity extends Activity {
         animationTimer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
-                final float dt = 0.001f;
+                final float dt = 0.030f;
                 for (Ball ball : world.getBalls()) {
                     Vector2<Double> om = ball.getPosition();
                     Vector2<Double> vel = ball.getVelocity();
-                    om.setX(om.getX() + vel.getX() * dt);
-                    om.setY(om.getY() + vel.getY() * dt);
+                    Vector2<Double> dom = new Vector2<Double>(vel.getX() * dt, vel.getY() * dt);
+                    om.setX(om.getX() + dom.getX());
+                    om.setY(om.getY() + dom.getY());
+
+                    if (master != null) {
+                        boolean inWorld = false;
+                        for (PhysicalScreen screen : master.getScreenMap().values()) {
+                            if (om.getX() >= screen.getX1()
+                                    && om.getX() <= screen.getX2()
+                                    && om.getY() >= screen.getY1()
+                                    && om.getY() <= screen.getY2()) {
+                                inWorld = true;
+                                break;
+                            }
+                        }
+
+                        if (!inWorld) {
+                            PhysicalScreen screen = ScreenUtilitiesService.buildBasePhysicalScreen();
+                            if (om.getX() < screen.getX1()) {
+                                om.setX(screen.getX1());
+                                ball.getVelocity().setX(-ball.getVelocity().getX());
+                            } else if (om.getX() > screen.getX2()) {
+                                om.setX(screen.getX2());
+                                ball.getVelocity().setX(-ball.getVelocity().getX());
+                            } else if (om.getY() < screen.getY1()) {
+                                om.setY(screen.getY1());
+                                ball.getVelocity().setY(-ball.getVelocity().getY());
+                            } else if (om.getY() > screen.getY2()) {
+                                om.setY(screen.getY2());
+                                ball.getVelocity().setY(-ball.getVelocity().getY());
+                            }
+                        }
+                    } else if (master == null && slave == null) {
+                        boolean inWorld = false;
+                        PhysicalScreen screen = ScreenUtilitiesService.buildBasePhysicalScreen();
+                        if (om.getX() >= screen.getX1()
+                                && om.getX() <= screen.getX2()
+                                && om.getY() >= screen.getY1()
+                                && om.getY() <= screen.getY2()) {
+                            inWorld = true;
+                        }
+
+                        if (!inWorld) {
+                            if (om.getX() < screen.getX1()) {
+                                om.setX(screen.getX1());
+                                ball.getVelocity().setX(-ball.getVelocity().getX());
+                            } else if (om.getX() > screen.getX2()) {
+                                om.setX(screen.getX2());
+                                ball.getVelocity().setX(-ball.getVelocity().getX());
+                            } else if (om.getY() < screen.getY1()) {
+                                om.setY(screen.getY1());
+                                ball.getVelocity().setY(-ball.getVelocity().getY());
+                            } else if (om.getY() > screen.getY2()) {
+                                om.setY(screen.getY2());
+                                ball.getVelocity().setY(-ball.getVelocity().getY());
+                            }
+                        }
+                    }
+
                     ball.setPosition(om);
                 }
             }
-        }, 0, 1);
+        }, 0, 30);
 
         //testTimer();
         //testRect();

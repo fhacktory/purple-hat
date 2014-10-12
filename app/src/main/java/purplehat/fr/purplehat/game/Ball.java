@@ -28,7 +28,7 @@ public class Ball {
 
     public Ball() {
         position = new Vector2<Double>(0.0, 0.0);
-        velocity = new Vector2<Double>(3.0, 6.0);
+        velocity = new Vector2<Double>(Math.random() * 100, Math.random() * 100);
         acceleration = new Vector2<Double>(0.0, 0.0);
         radius = 0.0;
     }

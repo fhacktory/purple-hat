@@ -35,6 +35,10 @@ public class Master {
         return screenMap.get(id);
     }
 
+    public Map<String, PhysicalScreen> getScreenMap() {
+        return screenMap;
+    }
+
     private Map<String, PhysicalScreen> screenMap;
     private WebSocketServer server;
 

@@ -20,10 +20,12 @@ public class World {
     public World() {
         balls = new ArrayList<Ball>();
 
-        Ball ball = new Ball();
-        ball.setPosition(new Vector2<Double>(30.0, 40.0));
-        ball.setRadius(10.0);
-        balls.add(ball);
+        for (int i = 0; i < 10; i++) {
+            Ball ball = new Ball();
+            ball.setPosition(new Vector2<Double>(30.0, 40.0));
+            ball.setRadius(1.0);
+            balls.add(ball);
+        }
     }
 
     public Collection<Ball> getBalls() {
