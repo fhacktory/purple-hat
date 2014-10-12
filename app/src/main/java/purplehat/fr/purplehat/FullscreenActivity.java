@@ -29,8 +29,8 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import purplehat.fr.purplehat.Geometrics.Edge;
-import purplehat.fr.purplehat.game.Ball;
 import purplehat.fr.purplehat.Geometrics.PolygonUtill;
+import purplehat.fr.purplehat.game.Ball;
 import purplehat.fr.purplehat.game.Vector2;
 import purplehat.fr.purplehat.game.World;
 import purplehat.fr.purplehat.gesturelistener.OnBackgroundTouchedListener;
