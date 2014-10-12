@@ -81,7 +81,7 @@ public class Slave {
                     JSONObject obj = new JSONObject(message);
                     try {
                         String action = obj.getString("action");
-                        Log.d(LOG_TAG, "received action: " + action);
+                        // Log.d(LOG_TAG, "received action: " + action);
                         Collection<Listener> listeners = allListeners.get(action);
                         if (listeners != null) {
                             for (Listener listener : listeners) {
