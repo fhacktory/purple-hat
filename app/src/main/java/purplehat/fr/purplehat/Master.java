@@ -1,16 +1,11 @@
 package purplehat.fr.purplehat;
 
-import android.content.Context;
 import android.graphics.Point;
-import android.net.wifi.WifiInfo;
-import android.net.wifi.WifiManager;
 import android.util.Log;
 
 import org.java_websocket.WebSocket;
 import org.java_websocket.handshake.ClientHandshake;
 import org.java_websocket.server.WebSocketServer;
-import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
