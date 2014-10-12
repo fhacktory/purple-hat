@@ -19,6 +19,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+import purplehat.fr.purplehat.game.Ball;
 import purplehat.fr.purplehat.game.Vector2;
 import purplehat.fr.purplehat.screen.ScreenUtilitiesService;
 
@@ -88,38 +89,24 @@ public class Master {
     }
 
     public void broadcastWorld() {
-        /*try {
+        try {
             JSONObject data = new JSONObject();
-            data.put("action", "world:virtual:updated");
-            JSONArray screenList = new JSONArray();
-            Double xMin = 0.0;
-            Double xMax = 0.0;
-            Double yMin = 0.0;
-            Double yMax = 0.0;
-            for (PhysicalScreen screen : screenMap.values()) {
-                xMin = Math.min(xMin, screen.getX1());
-                xMin = Math.min(xMin, screen.getX2());
-                xMax = Math.max(xMax, screen.getX1());
-                xMax = Math.max(xMax, screen.getX2());
-                yMin = Math.min(yMin, screen.getY1());
-                yMin = Math.min(yMin, screen.getY2());
-                yMax = Math.max(yMax, screen.getY1());
-                yMax = Math.max(yMax, screen.getY2());
+            data.put("action", "world:balls");
+            JSONArray ballList = new JSONArray();
+            for (Ball ball : FullscreenActivity.getInstance().getWorld().getBalls()) {
+                JSONObject ballData = new JSONObject();
+                ballData.put("x", ball.getPosition().getX());
+                ballData.put("y", ball.getPosition().getY());
+                ballData.put("vx", ball.getVelocity().getX());
+                ballData.put("vx", ball.getVelocity().getY());
+                ballData.put("r", ball.getRadius());
+                ballList.put(ballData);
             }
-            for (Map.Entry<String, PhysicalScreen> entry : screenMap.entrySet()) {
-                PhysicalScreen screen = entry.getValue();
-                JSONObject screenData = new JSONObject();
-                screenData.put("id", entry.getKey());
-                screenData.put("x1", (screen.getX1() - xMin) / (xMax - xMin));
-                screenData.put("y1", (screen.getY1() - yMin) / (yMax - yMin));
-                screenData.put("x2", (screen.getX2() - xMin) / (xMax - xMin));
-                screenData.put("y2", (screen.getY2() - yMin) / (yMax - yMin));
-                screenList.put(screenData);
-            }
+            data.put("balls", ballList);
             broadcast(data);
         } catch (JSONException e) {
             Log.e(LOG_TAG, "new screen json couldn't be constructed");
-        }*/
+        }
     }
 
     public void broadcast(JSONObject obj) {

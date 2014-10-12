@@ -83,6 +83,10 @@ public class FullscreenActivity extends Activity {
 
     private Master master;
 
+    public World getWorld() {
+        return world;
+    }
+
     // THE WORLD
     World world = new World();
     private static FullscreenActivity instance = null;

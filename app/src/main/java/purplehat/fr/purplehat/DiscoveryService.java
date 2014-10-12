@@ -20,7 +20,7 @@ import purplehat.fr.purplehat.screen.ScreenUtilitiesService;
 public class DiscoveryService {
     private final static int DISCOVERY_BROADCAST_PORT = 4242;
     private final static int DISCOVERY_HANDSHAKE_PORT = 1337;
-    private final static int DISCOVERY_TIMEOUT = 0;
+    private final static int DISCOVERY_TIMEOUT = 2000;
     private BroadcastService broadcastService;
     private Context context;
 
