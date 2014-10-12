@@ -5,9 +5,11 @@ import android.app.Activity;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.LinearGradient;
 import android.graphics.Paint;
 import android.graphics.Point;
 import android.graphics.Rect;
+import android.graphics.Shader;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
@@ -209,9 +211,10 @@ public class FullscreenActivity extends Activity {
             }
 
             @Override
-            public void onTouchMove(int x, int y) {
+            public void onTouchMove(int x, int y, OnBackgroundTouchedListener.Direction direction) {
                 currentSwipePoint.x = x;
                 currentSwipePoint.y = y;
+                currentSwipeDirection = direction;
             }
         }));
 
@@ -299,6 +302,7 @@ public class FullscreenActivity extends Activity {
         new Thread(new ConnexionListener()).start();
     }
 
+    private OnBackgroundTouchedListener.Direction currentSwipeDirection;
     Point currentSwipePoint = new Point();
     boolean swiping = false;
 
@@ -326,15 +330,40 @@ public class FullscreenActivity extends Activity {
     }
 
     private void drawHUD(Canvas canvas) {
-        if (swiping) {
-            Paint paint = new Paint(Color.BLACK);
-            paint.setStrokeWidth(10);
-            canvas.drawLine(0, currentSwipePoint.y,
-                    ScreenUtilitiesService.getWidth(), currentSwipePoint.y,
-                    paint);
-            canvas.drawLine(currentSwipePoint.x, 0,
-                    currentSwipePoint.x, ScreenUtilitiesService.getHeight(),
-                    paint);
+        if (swiping && currentSwipeDirection != null) {
+            Paint paint = new Paint();
+            paint.setStrokeWidth(0);
+            Rect rect = null;
+            Shader shader = null;
+
+            switch (currentSwipeDirection) {
+                case UP_DOWN:
+                    break;
+
+                case DOWN_UP:
+                    break;
+
+                case LEFT_RIGHT:
+                    rect = new Rect((int) (0.85f * (float) ScreenUtilitiesService.getWidth()),  0,
+                            ScreenUtilitiesService.getWidth(), ScreenUtilitiesService.getHeight());
+                    shader = new LinearGradient(ScreenUtilitiesService.getWidth() - currentSwipePoint.x / 2, rect.top,
+                            ScreenUtilitiesService.getWidth(), rect.top,
+                            Color.WHITE, Color.BLACK, Shader.TileMode.CLAMP);
+                    break;
+
+                case RIGHT_LEFT:
+                    rect = new Rect(0, 0,
+                            (int) (0.15f * (float) ScreenUtilitiesService.getWidth()), ScreenUtilitiesService.getHeight());
+                    shader = new LinearGradient(currentSwipePoint.x / 2, rect.top,
+                            0, rect.top,
+                            Color.WHITE, Color.BLACK, Shader.TileMode.CLAMP);
+                    break;
+            }
+
+            /*if (rect != null && shader != null) {
+                paint.setShader(shader);
+                canvas.drawRect(rect, paint);
+            }*/
         }
     }
 

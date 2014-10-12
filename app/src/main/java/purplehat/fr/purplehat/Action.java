@@ -3,6 +3,9 @@ package purplehat.fr.purplehat;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import purplehat.fr.purplehat.game.Ball;
+import purplehat.fr.purplehat.game.Vector2;
+
 /**
  * Created by vcaen on 12/10/2014.
  */
@@ -49,6 +52,14 @@ public class Action {
             e.printStackTrace();
         }
         return  null;
+    }
+
+    public Ball getBall() {
+        Ball ball = new Ball();
+        ball.setPosition(new Vector2<Double>(init_x,init_y));
+        ball.setRadius(10.0);
+        ball.setVelocity(new Vector2<Double>(direction_x, direction_y));
+        return ball;
     }
 
 }
