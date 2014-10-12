@@ -34,10 +34,12 @@ import purplehat.fr.purplehat.utils.AddBallAction;
 import purplehat.fr.purplehat.utils.ScreenUtilitiesService;
 import purplehat.fr.purplehat.view.BgTouchListener;
 import purplehat.fr.purplehat.view.DrawingView;
+import purplehat.fr.purplehat.view.RainbowDrawer;
 
 public class FullscreenActivity extends Activity {
     private static final int MASTER_PORT = 1618;
     private static final String MASTER_ID = "424242";
+    RainbowDrawer rainbowDrawer;
     private Slave slave;
 
     private Vector2<Double> viewportOffset;
@@ -86,7 +88,7 @@ public class FullscreenActivity extends Activity {
         final DisplayMetrics dm = new DisplayMetrics();
         this.getWindowManager().getDefaultDisplay().getMetrics(dm);
 
-        // World drawer
+
         mDrawerView.addDrawer(new DrawingView.Drawer() {
             @Override
             public void draw(Canvas canvas) {
@@ -155,7 +157,7 @@ public class FullscreenActivity extends Activity {
                     return;
 
                 final float dt = 0.030f;
-                synchronized (world) {
+                synchronized (world.getBalls()) {
                     for (Ball ball : world.getBalls()) {
                         double oldX = ball.getPosition().getX();
                         double oldY = ball.getPosition().getY();
@@ -278,6 +280,8 @@ public class FullscreenActivity extends Activity {
     boolean swiping = false;
 
     Bitmap purpleHatBmp = null;
+    boolean firstDraw = true;
+
 
     private void drawWorld(Canvas canvas) {
         if (getInstance() == null) {
@@ -285,20 +289,22 @@ public class FullscreenActivity extends Activity {
         }
         Paint paint = new Paint();
         paint.setColor(Color.RED);
-        synchronized (viewportOffset) {
-            synchronized (world) {
-                synchronized (world.getBalls()) {
-                    for (Ball ball : world.getBalls()) {
-                        Point p = ScreenUtilitiesService.mm2pixel(ball.getPosition(), viewportOffset);
-                        if (purpleHatBmp == null) {
-                            canvas.drawCircle(p.x, p.y, ScreenUtilitiesService.mm2pixel(ball.getRadius().floatValue()), paint);
-                        } else {
-                            canvas.drawBitmap(purpleHatBmp, p.x - (purpleHatBmp.getWidth() / 2),
-                                    p.y - (purpleHatBmp.getHeight() / 2), paint);
-                        }
-                    }
+        synchronized (world.getBalls()) {
+            for (Ball ball : world.getBalls()) {
+            if(firstDraw) {
+                ball.setRainbowDrawer(new RainbowDrawer(this));
+                mDrawerView.addDrawer(ball.getRainbowDrawer());
+            }
+                Point p = ScreenUtilitiesService.mm2pixel(ball.getPosition(), viewportOffset);
+            ball.getRainbowDrawer().setXY(p.x,p.y);
+                if (purpleHatBmp == null) {
+                    canvas.drawCircle(p.x, p.y, ScreenUtilitiesService.mm2pixel(ball.getRadius().floatValue()), paint);
+                } else {
+                    canvas.drawBitmap(purpleHatBmp, p.x - (purpleHatBmp.getWidth() / 2),
+                            p.y - (purpleHatBmp.getHeight() / 2), paint);
                 }
             }
+        firstDraw = false;
         }
     }
 
@@ -397,7 +403,7 @@ public class FullscreenActivity extends Activity {
             public void notify(JSONObject data) {
                 try {
                     JSONArray balls = data.getJSONArray("balls");
-                    synchronized (world) {
+                    synchronized (world.getBalls()) {
                         world.getBalls().clear();
                         for (int i = 0; i < balls.length(); i++) {
                             JSONObject ballData = balls.getJSONObject(i);
@@ -436,7 +442,9 @@ public class FullscreenActivity extends Activity {
     }
 
     public void addBallInWorld(Ball ball) {
-        world.getBalls().add(ball);
+        synchronized (world.getBalls()) {
+            world.getBalls().add(ball);
+        }
     }
 
     public void onExitingSwipeEvent(final int swipeX, final int swipeY) {

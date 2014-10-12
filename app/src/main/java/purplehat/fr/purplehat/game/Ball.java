@@ -1,9 +1,13 @@
 package purplehat.fr.purplehat.game;
 
+import purplehat.fr.purplehat.view.RainbowDrawer;
+
 /**
  * Created by jmcomets on 11/10/14.
  */
 public class Ball {
+
+    RainbowDrawer rainbowDrawer;
     private Vector2<Double> position;
 
     public Vector2<Double> getVelocity() {
@@ -31,6 +35,7 @@ public class Ball {
         velocity = new Vector2<Double>(Math.random() * 100, Math.random() * 100);
         acceleration = new Vector2<Double>(0.0, 0.0);
         radius = 0.0;
+
     }
 
     public Ball(Vector2<Double> position, double radius) {
@@ -56,4 +61,11 @@ public class Ball {
         this.radius = radius;
     }
 
+    public RainbowDrawer getRainbowDrawer() {
+        return rainbowDrawer;
+    }
+
+    public void setRainbowDrawer(RainbowDrawer rainbowDrawer) {
+        this.rainbowDrawer = rainbowDrawer;
+    }
 }

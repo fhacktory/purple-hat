@@ -79,10 +79,10 @@ public class DrawingView extends SurfaceView implements SurfaceHolder.Callback {
             canvas.drawColor(Color.WHITE);
 
             // drawers draw
-            for (Drawer d : drawers) {
-                d.draw(canvas);
+                for (Drawer d : drawers) {
+                    d.draw(canvas);
+                }
             }
-        }
     }
 
     private DrawerThread thread;
