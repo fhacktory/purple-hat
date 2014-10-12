@@ -2,7 +2,6 @@ package purplehat.fr.purplehat;
 
 
 import android.app.Activity;
-import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.LinearGradient;
@@ -10,8 +9,6 @@ import android.graphics.Paint;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.Shader;
-import android.net.wifi.WifiInfo;
-import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -23,13 +20,9 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import purplehat.fr.purplehat.Geometrics.Edge;
-import purplehat.fr.purplehat.Geometrics.PolygonUtill;
 import purplehat.fr.purplehat.game.Ball;
 import purplehat.fr.purplehat.game.Vector2;
 import purplehat.fr.purplehat.game.World;
@@ -151,6 +144,14 @@ public class FullscreenActivity extends Activity {
             @Override
             public void onTouchDown(int x, int y) {
                 swiping = true;
+                if (master != null || slave != null) {
+                    Action action = new Action(0.0,0.0,0.,500.,500.);
+                    if (master != null) {
+                        master.broadcast(action.getJSON());
+                    } else {
+                        slave.send(action.getJSON());
+                    }
+                }
             }
 
             @Override
@@ -316,6 +317,13 @@ public class FullscreenActivity extends Activity {
                 // world.updateFromJson(data);
             }
         });*/
+
+        slave.addListener("create ball", new Slave.Listener() {
+            @Override
+            public void notify(JSONObject data) {
+                addBallInWorld(Action.parseJson(data).getBall());
+            }
+        });
         slave.connect(masterAddress, MasterProxy.MASTER_PROXY_PORT_DE_OUF);
     }
 
@@ -323,6 +331,10 @@ public class FullscreenActivity extends Activity {
         Log.d("TG", "become master biatch");
         master = new Master(MasterProxy.MASTER_PROXY_PORT_DE_OUF, "424242", null);
         master.start();
+    }
+
+    public void addBallInWorld(Ball ball) {
+        world.getBalls().add(ball);
     }
 
     public void onExitingSwipeEvent(final int swipeX, final int swipeY) {
