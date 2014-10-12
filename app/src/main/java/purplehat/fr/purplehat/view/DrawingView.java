@@ -73,7 +73,7 @@ public class DrawingView extends SurfaceView implements SurfaceHolder.Callback {
             if (canvas == null) {
                 return;
             }
-            Log.d(LOG_TAG, "drawing canvas");
+            //Log.d(LOG_TAG, "drawing canvas");
 
             // fill background
             canvas.drawColor(Color.WHITE);
