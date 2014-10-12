@@ -57,6 +57,7 @@ public class Master {
             @Override
             public void onOpen(WebSocket conn, ClientHandshake handshake) {
                 Log.d(LOG_TAG, "connection opened");
+                // TODO send position
             }
 
             @Override
@@ -78,27 +79,42 @@ public class Master {
     public void addSlaveScreen(String screenId, PhysicalScreen slaveScreen) {
         Log.d(LOG_TAG, "Nombre de client : " + String.valueOf(screenMap.size()));
         screenMap.put(screenId, slaveScreen);
-        broadcastWorld();
+        // broadcastWorld();
     }
 
     public void broadcastWorld() {
-        try {
+        /*try {
             JSONObject data = new JSONObject();
-            data.put("action", "views changed");
+            data.put("action", "world:virtual:updated");
             JSONArray screenList = new JSONArray();
+            Double xMin = 0.0;
+            Double xMax = 0.0;
+            Double yMin = 0.0;
+            Double yMax = 0.0;
             for (PhysicalScreen screen : screenMap.values()) {
+                xMin = Math.min(xMin, screen.getX1());
+                xMin = Math.min(xMin, screen.getX2());
+                xMax = Math.max(xMax, screen.getX1());
+                xMax = Math.max(xMax, screen.getX2());
+                yMin = Math.min(yMin, screen.getY1());
+                yMin = Math.min(yMin, screen.getY2());
+                yMax = Math.max(yMax, screen.getY1());
+                yMax = Math.max(yMax, screen.getY2());
+            }
+            for (Map.Entry<String, PhysicalScreen> entry : screenMap.entrySet()) {
+                PhysicalScreen screen = entry.getValue();
                 JSONObject screenData = new JSONObject();
-                screenData.put("x1", screen.getX1());
-                screenData.put("y1", screen.getY1());
-                screenData.put("x2", screen.getX2());
-                screenData.put("y2", screen.getY2());
+                screenData.put("id", entry.getKey());
+                screenData.put("x1", (screen.getX1() - xMin) / (xMax - xMin));
+                screenData.put("y1", (screen.getY1() - yMin) / (yMax - yMin));
+                screenData.put("x2", (screen.getX2() - xMin) / (xMax - xMin));
+                screenData.put("y2", (screen.getY2() - yMin) / (yMax - yMin));
                 screenList.put(screenData);
             }
-            data.put("rects", screenList);
             broadcast(data);
         } catch (JSONException e) {
             Log.e(LOG_TAG, "new screen json couldn't be constructed");
-        }
+        }*/
     }
 
     public void broadcast(JSONObject obj) {

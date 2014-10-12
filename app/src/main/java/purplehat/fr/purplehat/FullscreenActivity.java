@@ -6,10 +6,12 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Point;
 import android.graphics.Rect;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
@@ -20,10 +22,14 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Random;
 
 import purplehat.fr.purplehat.Geometrics.Edge;
+import purplehat.fr.purplehat.game.Ball;
+import purplehat.fr.purplehat.game.Rect2;
 import purplehat.fr.purplehat.Geometrics.PolygonUtill;
+import purplehat.fr.purplehat.game.Rect2;
 import purplehat.fr.purplehat.game.World;
 import purplehat.fr.purplehat.gesturelistener.OnBackgroundTouchedListener;
 import purplehat.fr.purplehat.screen.ScreenUtilitiesService;
@@ -69,6 +75,8 @@ public class FullscreenActivity extends Activity {
 
     private Slave slave;
 
+    private Point viewportOffset;
+
     public Master getMaster() {
         return master;
     }
@@ -93,6 +101,8 @@ public class FullscreenActivity extends Activity {
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        viewportOffset = new Point(0, 0);
 
         super.onCreate(savedInstanceState);
 
@@ -145,21 +155,37 @@ public class FullscreenActivity extends Activity {
 */
 
         mDrawerView = (DrawingView) findViewById(R.id.fullscreen_content);
-//        mDrawerView.addDrawer(new DrawingView.Drawer() {
-//            @Override
-//            public void draw(Canvas canvas) {
-//                Paint paint = new Paint();
-//                paint.setColor(Color.YELLOW);
-//                for (Ball ball : world.getBalls()) {
-//                    canvas.drawCircle(ball.getPosition().getX(), ball.getPosition().getY(), ball.getRadius(), paint);
-//                }
-//            }
-//        });
+        final DisplayMetrics dm = new DisplayMetrics();
+        FullscreenActivity.getInstance().getWindowManager().getDefaultDisplay().getMetrics(dm);
+        mDrawerView.addDrawer(new DrawingView.Drawer() {
+            @Override
+            public void draw(Canvas canvas) {
+                Paint paint = new Paint();
+                paint.setColor(Color.YELLOW);
+                for (Ball ball : world.getBalls()) {
+                    Point p = ScreenUtilitiesService.mm2pixel(new Point(ball.getPosition().getX().intValue(),
+                            ball.getPosition().getY().intValue()),
+                            viewportOffset);
 
-        mDrawerView.setOnTouchListener(new OnBackgroundTouchedListener());
+                    canvas.drawCircle(p.x, p.y, ScreenUtilitiesService.mm2pixel(ball.getRadius().floatValue()), paint);
+                }
+            }
+        });
 
-        testTimer();
-        testRect();
+        mDrawerView.setOnTouchListener(new OnBackgroundTouchedListener(new OnBackgroundTouchedListener.InOrOutListener() {
+            @Override
+            public void onIn(int x, int y) {
+                onEntrantSwipeEvent(x, y);
+            }
+
+            @Override
+            public void onOut(int x, int y) {
+                onExitingSwipeEvent(x, y);
+            }
+        }));
+
+        //testTimer();
+        //testRect();
 
         //testTheMasterMagic(true);
 
@@ -168,7 +194,6 @@ public class FullscreenActivity extends Activity {
         // testDiscoveryWaitConnexion();
 
         new Thread(new ConnexionListener()).start();
-
     }
 
     @Override
@@ -176,22 +201,21 @@ public class FullscreenActivity extends Activity {
         super.onPostCreate(savedInstanceState);
 
         //onExitingSwipeEvent(42, 42);
-        onEntrantSwipeEvent(42, 42);
+        //onEntrantSwipeEvent(42, 42);
     }
 
     public void becomeASlave(byte[] masterAddress) {
         Log.d("TG", "become slave biatch");
         slave = new Slave();
-        slave.addListener("views changed", new Slave.Listener() {
+        /*slave.addListener("world:virtual:updated", new Slave.Listener() {
             @Override
             public void notify(JSONObject data) {
-                Log.d("ACTIVITY", "views changed" + data);
-                world.updateFromJson(data);
+                Log.d("ACTIVITY", "world:updated" + data);
+                // world.updateFromJson(data);
             }
-        });
+        });*/
         slave.connect(masterAddress, MasterProxy.MASTER_PROXY_PORT_DE_OUF);
     }
-
 
     public void becomeAMaster() {
         Log.d("TG", "become master biatch");
@@ -369,7 +393,7 @@ public class FullscreenActivity extends Activity {
         mDrawerView.addDrawer(new DrawingView.Drawer() {
             @Override
             public void draw(Canvas canvas) {
-                canvas.drawText("TIME : "+ s.getRelativeTime(), 100, 100, new Paint(Color.RED));
+                canvas.drawText("TIME : " + s.getRelativeTime(), 100, 100, new Paint(Color.RED));
             }
         });
     }
@@ -418,7 +442,6 @@ public class FullscreenActivity extends Activity {
             }
         });
     }
-
 
     @Override
     protected void onStop() {

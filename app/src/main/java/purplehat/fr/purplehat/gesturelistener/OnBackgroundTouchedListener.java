@@ -17,6 +17,7 @@ public class OnBackgroundTouchedListener implements View.OnTouchListener {
 
     private static final int MIN_TOUCH_DISTANCE_DIRECTION = 10;
     private static final int SCREEN_IO_MARGIN = 30;
+    private final InOrOutListener inOrOutListener;
 
     public enum Direction {
         UP_DOWN,
@@ -35,6 +36,15 @@ public class OnBackgroundTouchedListener implements View.OnTouchListener {
     Direction direction;
     IO inorout = IO.NONE;
     float lineWidth = 80;
+
+    public interface InOrOutListener {
+        public void onIn(int x, int y);
+        public void onOut(int x, int y);
+    }
+
+    public OnBackgroundTouchedListener(InOrOutListener inOrOutListener) {
+        this.inOrOutListener = inOrOutListener;
+    }
 
     public boolean onTouch(View v, MotionEvent motionEvent) {
         DrawingView surfaceView = (DrawingView) v;
@@ -88,9 +98,8 @@ public class OnBackgroundTouchedListener implements View.OnTouchListener {
 
     public void handleUp(DrawingView v, MotionEvent event) {
         Point center = ScreenUtilitiesService.getDisplayCenter();
-        final float x, y;
-        x = event.getRawX();
-        y = event.getRawY();
+        int x = (int) event.getRawX();
+        int y = (int) event.getRawY();
         if(direction == Direction.LEFT_RIGHT && x > ScreenUtilitiesService.getWidth() - SCREEN_IO_MARGIN) {
             inorout = IO.OUT;
         } else if(direction == Direction.RIGHT_LEFT && x < SCREEN_IO_MARGIN) {
@@ -111,6 +120,13 @@ public class OnBackgroundTouchedListener implements View.OnTouchListener {
         } else if(direction == Direction.DOWN_UP
                 && Math.abs(y - ScreenUtilitiesService.getDisplayCenter().y) <  SCREEN_IO_MARGIN) {
             inorout = IO.IN;
+        }
+
+        // Fire event for in/out
+        if (inorout.equals(IO.IN)) {
+            inOrOutListener.onIn(x, y);
+        } else if (inorout.equals(IO.OUT)) {
+            inOrOutListener.onOut(x, y);
         }
     }
 
