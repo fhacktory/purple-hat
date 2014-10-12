@@ -75,8 +75,8 @@ public class Master {
                     try {
                         String action = obj.getString("action");
                         if (action.equals("create ball")) {
-                            FullscreenActivity.getInstance().addBallInWorld(AddBallAction.parseJson(obj).getBall());
-                            broadcast(obj);
+                            /*FullscreenActivity.getInstance().addBallInWorld(AddBallAction.parseJson(obj).getBall());
+                            broadcast(obj);*/
                         }
                     } catch (JSONException e) {
                         Log.w(LOG_TAG, "no action given");
