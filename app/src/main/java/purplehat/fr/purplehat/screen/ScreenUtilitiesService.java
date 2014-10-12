@@ -9,6 +9,7 @@ import android.view.WindowManager;
 import purplehat.fr.purplehat.FullscreenActivity;
 import purplehat.fr.purplehat.PhysicalScreen;
 import purplehat.fr.purplehat.PurpleHat;
+import purplehat.fr.purplehat.game.Vector2;
 
 /**
  * Created by vcaen on 11/10/2014.
@@ -43,28 +44,28 @@ public class ScreenUtilitiesService {
         return dm.heightPixels;
     }
 
-    public static Point pixel2mm(Point point) {
+    public static Vector2<Double> pixel2mm(Point point) {
         DisplayMetrics dm = new DisplayMetrics();
         FullscreenActivity.getInstance().getWindowManager().getDefaultDisplay().getMetrics(dm);
-        return new Point(
-                (int) (INCHES_TO_MM * point.x / dm.xdpi),
-                (int) (INCHES_TO_MM * point.y / dm.ydpi));
+        return new Vector2<Double>(
+                INCHES_TO_MM * point.x / dm.xdpi,
+                INCHES_TO_MM * point.y / dm.ydpi);
     }
 
-    public static Point mm2pixel(Point point) {
+    public static Point mm2pixel(Vector2<Double> point) {
         DisplayMetrics dm = new DisplayMetrics();
         FullscreenActivity.getInstance().getWindowManager().getDefaultDisplay().getMetrics(dm);
         return new Point(
-                (int) (point.x * dm.xdpi / INCHES_TO_MM),
-                (int) (point.y * dm.ydpi / INCHES_TO_MM));
+                (int) (point.getX() * dm.xdpi / INCHES_TO_MM),
+                (int) (point.getY() * dm.ydpi / INCHES_TO_MM));
     }
 
-    public static Point mm2pixel(Point point, Point offset) {
+    public static Point mm2pixel(Vector2<Double> point, Vector2<Double> offset) {
         DisplayMetrics dm = new DisplayMetrics();
         FullscreenActivity.getInstance().getWindowManager().getDefaultDisplay().getMetrics(dm);
         return new Point(
-                (int) ((point.x - offset.x) * dm.xdpi / INCHES_TO_MM),
-                (int) ((point.y - offset.y) * dm.ydpi / INCHES_TO_MM));
+                (int) ((point.getX() - offset.getX()) * dm.xdpi / INCHES_TO_MM),
+                (int) ((point.getY() - offset.getY()) * dm.ydpi / INCHES_TO_MM));
     }
 
     public static float mm2pixel(float distance) {
