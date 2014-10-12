@@ -487,4 +487,8 @@ public class FullscreenActivity extends Activity {
     public Master getMaster() {
         return master;
     }
+
+    public Slave getSlave() {
+        return slave;
+    }
 }

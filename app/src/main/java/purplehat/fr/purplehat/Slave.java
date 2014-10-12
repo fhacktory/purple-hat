@@ -41,6 +41,7 @@ public class Slave {
     private byte[] masterAddress = null;
 
     public Slave(String id) {
+        Log.d(LOG_TAG, "New slave with id=" + id);
         this.id = id;
         allListeners = new HashMap<String, Collection<Listener>>();
     }
