@@ -20,6 +20,7 @@ import android.view.WindowManager;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Timer;
@@ -253,7 +254,15 @@ public class FullscreenActivity extends Activity {
             }
         }, 0, 30);
 
+        // start connexion listener
         new Thread(new ConnexionListener()).start();
+
+        // load bitmap
+        try {
+            InputStream stream = getAssets().open("purplehat-small.png");
+            purpleHatBmp = BitmapFactory.decodeStream(stream);
+        } catch (IOException e) {
+        }
     }
 
     @Override
@@ -274,19 +283,22 @@ public class FullscreenActivity extends Activity {
     Point currentSwipePoint = new Point();
     boolean swiping = false;
 
-    Bitmap purpleHatBmp = BitmapFactory.decodeFile("img/purplehat-small.png");
+    Bitmap purpleHatBmp = null;
 
     private void drawWorld(Canvas canvas) {
-        if (getInstance() == null)
+        if (getInstance() == null) {
             return;
+        }
         Paint paint = new Paint();
         paint.setColor(Color.RED);
         for (Ball ball : world.getBalls()) {
             Point p = ScreenUtilitiesService.mm2pixel(ball.getPosition(), viewportOffset);
-            //canvas.drawCircle(p.x, p.y, ScreenUtilitiesService.mm2pixel(ball.getRadius().floatValue()), paint);
-
-            canvas.drawBitmap(purpleHatBmp, p.x - (purpleHatBmp.getWidth() / 2),
-                              p.y - (purpleHatBmp.getHeight() / 2), paint);
+            if (purpleHatBmp == null) {
+                canvas.drawCircle(p.x, p.y, ScreenUtilitiesService.mm2pixel(ball.getRadius().floatValue()), paint);
+            } else {
+                canvas.drawBitmap(purpleHatBmp, p.x - (purpleHatBmp.getWidth() / 2),
+                        p.y - (purpleHatBmp.getHeight() / 2), paint);
+            }
         }
     }
 
