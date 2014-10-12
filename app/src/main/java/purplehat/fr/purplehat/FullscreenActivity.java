@@ -33,6 +33,7 @@ import purplehat.fr.purplehat.gesturelistener.OnBackgroundTouchedListener;
 import purplehat.fr.purplehat.screen.ScreenUtilitiesService;
 import purplehat.fr.purplehat.util.SystemUiHider;
 import purplehat.fr.purplehat.view.DrawingView;
+import purplehat.fr.purplehat.view.RainbowDrawer;
 
 /**
  * An example full-screen activity that shows and hides the system UI (i.e.
@@ -70,6 +71,7 @@ public class FullscreenActivity extends Activity {
     private SystemUiHider mSystemUiHider;
     private DrawingView mDrawerView;
     private DrawingView.DrawerThread mDrawerThread;
+    RainbowDrawer rainbowDrawer;
 
     private Slave slave;
 
@@ -117,7 +119,7 @@ public class FullscreenActivity extends Activity {
         final DisplayMetrics dm = new DisplayMetrics();
         this.getWindowManager().getDefaultDisplay().getMetrics(dm);
 
-        // World drawer
+
         mDrawerView.addDrawer(new DrawingView.Drawer() {
             @Override
             public void draw(Canvas canvas) {
@@ -150,7 +152,7 @@ public class FullscreenActivity extends Activity {
             public void onTouchDown(int x, int y) {
                 swiping = true;
                 if (master != null || slave != null) {
-                    Action action = new Action(0.0,0.0,0.,500.,500.);
+                    Action action = new Action(0.0, 0.0, 0., 500., 500.);
                     if (master != null) {
                         master.broadcast(action.getJSON());
                     } else {
@@ -284,6 +286,8 @@ public class FullscreenActivity extends Activity {
     boolean swiping = false;
 
     Bitmap purpleHatBmp = null;
+    boolean firstDraw = true;
+
 
     private void drawWorld(Canvas canvas) {
         if (getInstance() == null) {
@@ -292,7 +296,12 @@ public class FullscreenActivity extends Activity {
         Paint paint = new Paint();
         paint.setColor(Color.RED);
         for (Ball ball : world.getBalls()) {
+            if(firstDraw) {
+                ball.setRainbowDrawer(new RainbowDrawer(this));
+                mDrawerView.addDrawer(ball.getRainbowDrawer());
+            }
             Point p = ScreenUtilitiesService.mm2pixel(ball.getPosition(), viewportOffset);
+            ball.getRainbowDrawer().setXY(p.x,p.y);
             if (purpleHatBmp == null) {
                 canvas.drawCircle(p.x, p.y, ScreenUtilitiesService.mm2pixel(ball.getRadius().floatValue()), paint);
             } else {
@@ -300,6 +309,7 @@ public class FullscreenActivity extends Activity {
                         p.y - (purpleHatBmp.getHeight() / 2), paint);
             }
         }
+        firstDraw = false;
     }
 
     private void drawHUD(Canvas canvas) {

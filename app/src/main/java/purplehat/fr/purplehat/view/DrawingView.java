@@ -106,8 +106,10 @@ public class DrawingView extends SurfaceView implements SurfaceHolder.Callback {
             }
             canvas.drawColor(Color.WHITE);
 
-            for (Drawer d : drawers) {
-                d.draw(canvas);
+            synchronized (drawers) {
+                for (Drawer d : drawers) {
+                    d.draw(canvas);
+                }
             }
         }
     } // THREAD
@@ -178,7 +180,9 @@ public class DrawingView extends SurfaceView implements SurfaceHolder.Callback {
 
 
     public Drawer addDrawer(Drawer drawer) {
-        drawers.add(drawer);
+        synchronized (drawers) {
+            drawers.add(drawer);
+        }
         return drawer;
     }
 
