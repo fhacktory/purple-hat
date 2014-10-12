@@ -13,7 +13,6 @@ import android.graphics.Shader;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
 import android.util.Log;
-import android.view.View;
 import android.view.WindowManager;
 
 import org.json.JSONArray;
@@ -65,21 +64,19 @@ public class FullscreenActivity extends Activity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
         instance = this;
 
         try {
             discoveryService = new DiscoveryService(getApplicationContext());
         } catch (IOException e) {
-            e.printStackTrace();
+            Log.w(LOG_TAG, "DiscoveryService instance couldn't be instanciated");
         }
 
         viewportOffset = new Vector2<Double>(0.0, 0.0);
 
-        super.onCreate(savedInstanceState);
-
+        // Fullscreen
         setContentView(R.layout.activity_fullscreen);
-
-        final View contentView = findViewById(R.id.fullscreen_content);
         getWindow().setFlags(
                 WindowManager.LayoutParams.FLAG_FULLSCREEN,
                 WindowManager.LayoutParams.FLAG_FULLSCREEN);
@@ -358,15 +355,8 @@ public class FullscreenActivity extends Activity {
     }
 
     public void becomeASlave(byte[] masterAddress, String id) {
-        Log.d("TG", "become slave biatch");
+        Log.d(LOG_TAG, "become a slave");
         slave = new Slave(id);
-        /*slave.addListener("world:virtual:updated", new Slave.Listener() {
-            @Override
-            public void notify(JSONObject data) {
-                Log.d("ACTIVITY", "world:updated" + data);
-                // world.updateFromJson(data);
-            }
-        });*/
 
         slave.addListener("create ball", new Slave.Listener() {
             @Override
@@ -428,7 +418,7 @@ public class FullscreenActivity extends Activity {
     }
 
     public void becomeAMaster() {
-        Log.d("TG", "become master biatch");
+        Log.d(LOG_TAG, "becoming a master");
         master = new Master(MASTER_PORT, MASTER_ID, null);
         master.start();
 
