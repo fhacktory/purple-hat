@@ -129,7 +129,7 @@ public class Master {
                 ballData.put("x", ball.getPosition().getX());
                 ballData.put("y", ball.getPosition().getY());
                 ballData.put("vx", ball.getVelocity().getX());
-                ballData.put("vx", ball.getVelocity().getY());
+                ballData.put("vy", ball.getVelocity().getY());
                 ballData.put("r", ball.getRadius());
                 ballList.put(ballData);
             }

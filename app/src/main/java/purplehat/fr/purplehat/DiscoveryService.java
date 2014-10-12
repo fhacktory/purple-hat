@@ -93,6 +93,7 @@ public class DiscoveryService {
         broadcastService.send(new byte[]{42}, 1);
         ServerSocket serverSocket  = new ServerSocket(DISCOVERY_HANDSHAKE_PORT);
         serverSocket.setSoTimeout(DISCOVERY_TIMEOUT);
+        serverSocket.setReuseAddress(true);
         Socket socket = serverSocket.accept();
 
         byte[] masterAddress = new byte[4];

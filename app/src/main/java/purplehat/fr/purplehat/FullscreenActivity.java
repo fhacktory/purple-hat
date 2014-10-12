@@ -189,71 +189,88 @@ public class FullscreenActivity extends Activity {
                     return;
 
                 final float dt = 0.030f;
-                for (Ball ball : world.getBalls()) {
-                    Vector2<Double> om = ball.getPosition();
-                    Vector2<Double> vel = ball.getVelocity();
-                    Vector2<Double> dom = new Vector2<Double>(vel.getX() * dt, vel.getY() * dt);
-                    om.setX(om.getX() + dom.getX());
-                    om.setY(om.getY() + dom.getY());
+                synchronized (world) {
+                    for (Ball ball : world.getBalls()) {
+                        double oldX = ball.getPosition().getX();
+                        double oldY = ball.getPosition().getY();
+                        Vector2<Double> om = ball.getPosition();
+                        Vector2<Double> vel = ball.getVelocity();
+                        Vector2<Double> dom = new Vector2<Double>(vel.getX() * dt, vel.getY() * dt);
+                        om.setX(om.getX() + dom.getX());
+                        om.setY(om.getY() + dom.getY());
 
-                    if (master != null) {
-                        boolean inWorld = false;
-                        Log.d("nbr", "" + master.getScreenMap().size());
-                        for (PhysicalScreen screen : master.getScreenMap().values()) {
-                            Log.d("xy", "" + screen.getX1() + " ; " + screen.getY1() + " -> " + screen.getX2() + " ; " + screen.getY2());
+                        if (master != null) {
+                            boolean inWorld = false;
+                            // Log.d("nbr", "" + master.getScreenMap().size());
+                            PhysicalScreen container = null;
+                            for (PhysicalScreen screen : master.getScreenMap().values()) {
+                                // Log.d("xy", "" + screen.getX1() + " ; " + screen.getY1() + " -> " + screen.getX2() + " ; " + screen.getY2());
+                                if (om.getX() >= screen.getX1()
+                                        && om.getX() <= screen.getX2()
+                                        && om.getY() >= screen.getY1()
+                                        && om.getY() <= screen.getY2()) {
+                                    inWorld = true;
+                                    break;
+                                }
+                                if (oldX >= screen.getX1()
+                                        && oldX <= screen.getX2()
+                                        && oldY >= screen.getY1()
+                                        && oldY <= screen.getY2()) {
+                                    container = screen;
+                                }
+                            }
+
+                            if (!inWorld) {
+                                PhysicalScreen screen;
+                                if (container == null) {
+                                    screen = ScreenUtilitiesService.buildBasePhysicalScreen();
+                                } else {
+                                    screen = container;
+                                }
+
+                                if (om.getX() < screen.getX1()) {
+                                    om.setX(screen.getX1());
+                                    ball.getVelocity().setX(-ball.getVelocity().getX());
+                                } else if (om.getX() > screen.getX2()) {
+                                    om.setX(screen.getX2());
+                                    ball.getVelocity().setX(-ball.getVelocity().getX());
+                                } else if (om.getY() < screen.getY1()) {
+                                    om.setY(screen.getY1());
+                                    ball.getVelocity().setY(-ball.getVelocity().getY());
+                                } else if (om.getY() > screen.getY2()) {
+                                    om.setY(screen.getY2());
+                                    ball.getVelocity().setY(-ball.getVelocity().getY());
+                                }
+                            }
+                        } else if (master == null && slave == null) {
+                            boolean inWorld = false;
+                            PhysicalScreen screen = ScreenUtilitiesService.buildBasePhysicalScreen();
                             if (om.getX() >= screen.getX1()
                                     && om.getX() <= screen.getX2()
                                     && om.getY() >= screen.getY1()
                                     && om.getY() <= screen.getY2()) {
                                 inWorld = true;
-                                break;
+                            }
+
+                            if (!inWorld) {
+                                if (om.getX() < screen.getX1()) {
+                                    om.setX(screen.getX1());
+                                    ball.getVelocity().setX(-ball.getVelocity().getX());
+                                } else if (om.getX() > screen.getX2()) {
+                                    om.setX(screen.getX2());
+                                    ball.getVelocity().setX(-ball.getVelocity().getX());
+                                } else if (om.getY() < screen.getY1()) {
+                                    om.setY(screen.getY1());
+                                    ball.getVelocity().setY(-ball.getVelocity().getY());
+                                } else if (om.getY() > screen.getY2()) {
+                                    om.setY(screen.getY2());
+                                    ball.getVelocity().setY(-ball.getVelocity().getY());
+                                }
                             }
                         }
 
-                        if (!inWorld) {
-                            PhysicalScreen screen = ScreenUtilitiesService.buildBasePhysicalScreen();
-                            if (om.getX() < screen.getX1()) {
-                                om.setX(screen.getX1());
-                                ball.getVelocity().setX(-ball.getVelocity().getX());
-                            } else if (om.getX() > screen.getX2()) {
-                                om.setX(screen.getX2());
-                                ball.getVelocity().setX(-ball.getVelocity().getX());
-                            } else if (om.getY() < screen.getY1()) {
-                                om.setY(screen.getY1());
-                                ball.getVelocity().setY(-ball.getVelocity().getY());
-                            } else if (om.getY() > screen.getY2()) {
-                                om.setY(screen.getY2());
-                                ball.getVelocity().setY(-ball.getVelocity().getY());
-                            }
-                        }
-                    } else if (master == null && slave == null) {
-                        boolean inWorld = false;
-                        PhysicalScreen screen = ScreenUtilitiesService.buildBasePhysicalScreen();
-                        if (om.getX() >= screen.getX1()
-                                && om.getX() <= screen.getX2()
-                                && om.getY() >= screen.getY1()
-                                && om.getY() <= screen.getY2()) {
-                            inWorld = true;
-                        }
-
-                        if (!inWorld) {
-                            if (om.getX() < screen.getX1()) {
-                                om.setX(screen.getX1());
-                                ball.getVelocity().setX(-ball.getVelocity().getX());
-                            } else if (om.getX() > screen.getX2()) {
-                                om.setX(screen.getX2());
-                                ball.getVelocity().setX(-ball.getVelocity().getX());
-                            } else if (om.getY() < screen.getY1()) {
-                                om.setY(screen.getY1());
-                                ball.getVelocity().setY(-ball.getVelocity().getY());
-                            } else if (om.getY() > screen.getY2()) {
-                                om.setY(screen.getY2());
-                                ball.getVelocity().setY(-ball.getVelocity().getY());
-                            }
-                        }
+                        ball.setPosition(om);
                     }
-
-                    ball.setPosition(om);
                 }
             }
         }, 0, 30);
@@ -295,13 +312,15 @@ public class FullscreenActivity extends Activity {
         }
         Paint paint = new Paint();
         paint.setColor(Color.RED);
-        for (Ball ball : world.getBalls()) {
-            Point p = ScreenUtilitiesService.mm2pixel(ball.getPosition(), viewportOffset);
-            if (purpleHatBmp == null) {
-                canvas.drawCircle(p.x, p.y, ScreenUtilitiesService.mm2pixel(ball.getRadius().floatValue()), paint);
-            } else {
-                canvas.drawBitmap(purpleHatBmp, p.x - (purpleHatBmp.getWidth() / 2),
-                        p.y - (purpleHatBmp.getHeight() / 2), paint);
+        synchronized (world) {
+            for (Ball ball : world.getBalls()) {
+                Point p = ScreenUtilitiesService.mm2pixel(ball.getPosition(), viewportOffset);
+                if (purpleHatBmp == null) {
+                    canvas.drawCircle(p.x, p.y, ScreenUtilitiesService.mm2pixel(ball.getRadius().floatValue()), paint);
+                } else {
+                    canvas.drawBitmap(purpleHatBmp, p.x - (purpleHatBmp.getWidth() / 2),
+                            p.y - (purpleHatBmp.getHeight() / 2), paint);
+                }
             }
         }
     }
@@ -383,6 +402,30 @@ public class FullscreenActivity extends Activity {
                 }
             }
         });
+        slave.addListener("world:balls", new Slave.Listener() {
+            @Override
+            public void notify(JSONObject data) {
+                try {
+                    JSONArray balls = data.getJSONArray("balls");
+                    synchronized (world) {
+                        world.getBalls().clear();
+                        for (int i = 0; i < balls.length(); i++) {
+                            JSONObject ballData = balls.getJSONObject(i);
+                            double x = ballData.getDouble("x");
+                            double y = ballData.getDouble("y");
+                            double vx = ballData.getDouble("vx");
+                            double vy = ballData.getDouble("vy");
+                            double r = ballData.getDouble("r");
+                            Ball ball = new Ball(new Vector2<Double>(x, y), r);
+                            ball.setVelocity(new Vector2<Double>(vx, vy));
+                            world.getBalls().add(ball);
+                        }
+                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
         slave.connect(masterAddress, MasterProxy.MASTER_PROXY_PORT_DE_OUF);
     }
 
@@ -390,6 +433,14 @@ public class FullscreenActivity extends Activity {
         Log.d("TG", "become master biatch");
         master = new Master(MasterProxy.MASTER_PROXY_PORT_DE_OUF, "424242", null);
         master.start();
+
+        Timer updateWorldTimer = new Timer();
+        updateWorldTimer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                master.broadcastWorld();
+            }
+        }, 0, 30);
     }
 
     public void addBallInWorld(Ball ball) {
