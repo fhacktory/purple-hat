@@ -7,8 +7,10 @@ import android.util.Log;
 
 import java.io.IOException;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketAddress;
 import java.net.UnknownHostException;
 
 import purplehat.fr.purplehat.FullscreenActivity;
@@ -79,9 +81,10 @@ public class DiscoveryService {
 
     public void askConnection(int swipeX, int swipeY) throws IOException {
         broadcastService.send(new byte[]{42}, 1);
-        ServerSocket serverSocket  = new ServerSocket(DISCOVERY_HANDSHAKE_PORT);
+        ServerSocket serverSocket  = new ServerSocket();
         serverSocket.setSoTimeout(DISCOVERY_TIMEOUT);
         serverSocket.setReuseAddress(true);
+        serverSocket.bind(new InetSocketAddress(DISCOVERY_HANDSHAKE_PORT));
         Socket socket = serverSocket.accept();
 
         byte[] masterAddress = new byte[4];
