@@ -34,10 +34,12 @@ import purplehat.fr.purplehat.utils.AddBallAction;
 import purplehat.fr.purplehat.utils.ScreenUtilitiesService;
 import purplehat.fr.purplehat.view.BgTouchListener;
 import purplehat.fr.purplehat.view.DrawingView;
+import purplehat.fr.purplehat.view.RainbowDrawer;
 
 public class FullscreenActivity extends Activity {
     private static final int MASTER_PORT = 1618;
     private static final String MASTER_ID = "424242";
+    RainbowDrawer rainbowDrawer;
     private Slave slave;
 
     private Vector2<Double> viewportOffset;
@@ -86,7 +88,7 @@ public class FullscreenActivity extends Activity {
         final DisplayMetrics dm = new DisplayMetrics();
         this.getWindowManager().getDefaultDisplay().getMetrics(dm);
 
-        // World drawer
+
         mDrawerView.addDrawer(new DrawingView.Drawer() {
             @Override
             public void draw(Canvas canvas) {
@@ -278,6 +280,8 @@ public class FullscreenActivity extends Activity {
     boolean swiping = false;
 
     Bitmap purpleHatBmp = null;
+    boolean firstDraw = true;
+
 
     private void drawWorld(Canvas canvas) {
         if (getInstance() == null) {
@@ -287,7 +291,12 @@ public class FullscreenActivity extends Activity {
         paint.setColor(Color.RED);
         synchronized (world.getBalls()) {
             for (Ball ball : world.getBalls()) {
+            if(firstDraw) {
+                ball.setRainbowDrawer(new RainbowDrawer(this));
+                mDrawerView.addDrawer(ball.getRainbowDrawer());
+            }
                 Point p = ScreenUtilitiesService.mm2pixel(ball.getPosition(), viewportOffset);
+            ball.getRainbowDrawer().setXY(p.x,p.y);
                 if (purpleHatBmp == null) {
                     canvas.drawCircle(p.x, p.y, ScreenUtilitiesService.mm2pixel(ball.getRadius().floatValue()), paint);
                 } else {
@@ -295,6 +304,7 @@ public class FullscreenActivity extends Activity {
                             p.y - (purpleHatBmp.getHeight() / 2), paint);
                 }
             }
+        firstDraw = false;
         }
     }
 

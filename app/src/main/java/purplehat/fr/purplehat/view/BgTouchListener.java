@@ -7,6 +7,8 @@ import android.view.MotionEvent;
 import android.view.View;
 
 import purplehat.fr.purplehat.utils.ScreenUtilitiesService;
+import purplehat.fr.purplehat.view.DrawingView;
+import purplehat.fr.purplehat.view.RainbowDrawer;
 
 /**
  * Created by vcaen on 11/10/2014.
@@ -58,19 +60,24 @@ public class BgTouchListener implements View.OnTouchListener {
         this(inOrOutListener);
         this.touchListener = touchListener;
     }
-
+    RainbowDrawer drawer;
     public boolean onTouch(View v, MotionEvent motionEvent) {
         switch (motionEvent.getAction()) {
             case MotionEvent.ACTION_DOWN:
                 //TODO getTimer time
-                return handleDown(motionEvent);
+                drawer = new RainbowDrawer(v.getContext());
+                drawer.setXY(motionEvent.getRawX(), motionEvent.getRawY());
+                ((DrawingView )v).addDrawer(drawer);
+                return true;//handleDown(motionEvent);
 
             case MotionEvent.ACTION_MOVE :
-                return handleMove(motionEvent);
+                drawer.setXY(motionEvent.getRawX(), motionEvent.getRawY());
+                return false;//handleMove(motionEvent);
 
             case MotionEvent.ACTION_UP:
-                handleUp(motionEvent);
-                return true;
+                ((DrawingView )v).removeDrawer(drawer);
+                //handleUp(motionEvent);
+                return false;
         }
         return false;
     }
