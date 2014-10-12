@@ -91,16 +91,17 @@ public class FullscreenActivity extends Activity {
             @Override
             public void draw(Canvas canvas) {
                 drawWorld(canvas);
+                drawHUD(canvas);
             }
         });
 
         // UI drawer
-        mDrawerView.addDrawer(new DrawingView.Drawer() {
+        /*mDrawerView.addDrawer(new DrawingView.Drawer() {
             @Override
             public void draw(Canvas canvas) {
-                drawHUD(canvas);
+
             }
-        });
+        });*/
 
         mDrawerView.setOnTouchListener(new BgTouchListener(new BgTouchListener.InOrOutListener() {
             @Override
@@ -279,7 +280,7 @@ public class FullscreenActivity extends Activity {
         }
         Paint paint = new Paint();
         paint.setColor(Color.RED);
-        synchronized (world) {
+        synchronized (world.getBalls()) {
             for (Ball ball : world.getBalls()) {
                 Point p = ScreenUtilitiesService.mm2pixel(ball.getPosition(), viewportOffset);
                 if (purpleHatBmp == null) {
@@ -300,33 +301,51 @@ public class FullscreenActivity extends Activity {
             Shader shader = null;
 
             switch (currentSwipeDirection) {
-                case UP_DOWN:
+                case DOWN_UP:
+                    rect = new Rect(0, (int) (0.15f * (float) ScreenUtilitiesService.getHeight()),
+                            ScreenUtilitiesService.getWidth(), 0);
+                    shader = new LinearGradient(rect.left, 0.15f * (float) ScreenUtilitiesService.getHeight(),
+                            rect.left, 0,
+                            Color.TRANSPARENT, Color.rgb(125 - (int) ((1 - currentSwipePoint.y * 1.0 / ScreenUtilitiesService.getHeight()) * 125),
+                            125 - (int) ((1 - currentSwipePoint.y * 1.0 / ScreenUtilitiesService.getHeight()) * 125),
+                            125 - (int) ((1 - currentSwipePoint.y * 1.0 / ScreenUtilitiesService.getHeight()) * 125)), Shader.TileMode.CLAMP);
                     break;
 
-                case DOWN_UP:
+                case UP_DOWN:
+                    rect = new Rect(0, (int) (0.85f * (float) ScreenUtilitiesService.getHeight()),
+                            ScreenUtilitiesService.getWidth(), ScreenUtilitiesService.getHeight());
+                    shader = new LinearGradient(rect.left, 0.85f * (float) ScreenUtilitiesService.getHeight(),
+                            rect.left, ScreenUtilitiesService.getHeight(),
+                            Color.TRANSPARENT, Color.rgb(125 - (int) ((currentSwipePoint.y * 1.0 / ScreenUtilitiesService.getHeight()) * 125),
+                            125 - (int) ((currentSwipePoint.y * 1.0 / ScreenUtilitiesService.getHeight()) * 125),
+                            125 - (int) ((currentSwipePoint.y * 1.0 / ScreenUtilitiesService.getHeight()) * 125)), Shader.TileMode.CLAMP);
                     break;
 
                 case LEFT_RIGHT:
                     rect = new Rect((int) (0.85f * (float) ScreenUtilitiesService.getWidth()),  0,
                             ScreenUtilitiesService.getWidth(), ScreenUtilitiesService.getHeight());
-                    shader = new LinearGradient(ScreenUtilitiesService.getWidth() - currentSwipePoint.x / 2, rect.top,
+                    shader = new LinearGradient(0.85f * (float) ScreenUtilitiesService.getWidth(), rect.top,
                             ScreenUtilitiesService.getWidth(), rect.top,
-                            Color.WHITE, Color.BLACK, Shader.TileMode.CLAMP);
+                            Color.TRANSPARENT, Color.rgb(125 - (int) ((currentSwipePoint.x * 1.0 / ScreenUtilitiesService.getWidth()) * 125),
+                            125 - (int) ((currentSwipePoint.x * 1.0 / ScreenUtilitiesService.getWidth()) * 125),
+                            125 - (int) ((currentSwipePoint.x * 1.0 / ScreenUtilitiesService.getWidth()) * 125)), Shader.TileMode.CLAMP);
                     break;
 
                 case RIGHT_LEFT:
                     rect = new Rect(0, 0,
                             (int) (0.15f * (float) ScreenUtilitiesService.getWidth()), ScreenUtilitiesService.getHeight());
-                    shader = new LinearGradient(currentSwipePoint.x / 2, rect.top,
+                    shader = new LinearGradient(0.15f * (float) ScreenUtilitiesService.getWidth(), rect.top,
                             0, rect.top,
-                            Color.WHITE, Color.BLACK, Shader.TileMode.CLAMP);
+                            Color.TRANSPARENT, Color.rgb(125 - (int) ((1 - currentSwipePoint.x * 1.0 / ScreenUtilitiesService.getWidth()) * 125),
+                            125 - (int) ((1 - currentSwipePoint.x * 1.0 / ScreenUtilitiesService.getWidth()) * 125),
+                            125 - (int) ((1 - currentSwipePoint.x * 1.0 / ScreenUtilitiesService.getWidth()) * 125)), Shader.TileMode.CLAMP);
                     break;
             }
 
-            /*if (rect != null && shader != null) {
+            if (rect != null && shader != null) {
                 paint.setShader(shader);
                 canvas.drawRect(rect, paint);
-            }*/
+            }
         }
     }
 

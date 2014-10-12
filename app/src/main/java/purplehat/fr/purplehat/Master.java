@@ -125,14 +125,16 @@ public class Master {
             JSONObject data = new JSONObject();
             data.put("action", "world:balls");
             JSONArray ballList = new JSONArray();
-            for (Ball ball : FullscreenActivity.getInstance().getWorld().getBalls()) {
-                JSONObject ballData = new JSONObject();
-                ballData.put("x", ball.getPosition().getX());
-                ballData.put("y", ball.getPosition().getY());
-                ballData.put("vx", ball.getVelocity().getX());
-                ballData.put("vy", ball.getVelocity().getY());
-                ballData.put("r", ball.getRadius());
-                ballList.put(ballData);
+            synchronized (FullscreenActivity.getInstance().getWorld()) {
+                for (Ball ball : FullscreenActivity.getInstance().getWorld().getBalls()) {
+                    JSONObject ballData = new JSONObject();
+                    ballData.put("x", ball.getPosition().getX());
+                    ballData.put("y", ball.getPosition().getY());
+                    ballData.put("vx", ball.getVelocity().getX());
+                    ballData.put("vy", ball.getVelocity().getY());
+                    ballData.put("r", ball.getRadius());
+                    ballList.put(ballData);
+                }
             }
             data.put("balls", ballList);
             broadcast(data);
