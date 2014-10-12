@@ -65,18 +65,14 @@ public class BgTouchListener implements View.OnTouchListener {
         switch (motionEvent.getAction()) {
             case MotionEvent.ACTION_DOWN:
                 //TODO getTimer time
-                drawer = new RainbowDrawer(v.getContext());
-                drawer.setXY(motionEvent.getRawX(), motionEvent.getRawY());
-                ((DrawingView )v).addDrawer(drawer);
-                return true;//handleDown(motionEvent);
+                return handleDown(motionEvent);
 
             case MotionEvent.ACTION_MOVE :
-                drawer.setXY(motionEvent.getRawX(), motionEvent.getRawY());
-                return false;//handleMove(motionEvent);
+                return handleMove(motionEvent);
 
             case MotionEvent.ACTION_UP:
                 ((DrawingView )v).removeDrawer(drawer);
-                //handleUp(motionEvent);
+                handleUp(motionEvent);
                 return false;
         }
         return false;
