@@ -96,8 +96,8 @@ public class BgTouchListener implements View.OnTouchListener {
         Float dist_x = Math.abs(x - origin.x);
         Float dist_y = Math.abs(y - origin.y);
 
-
         // Detect movement direction
+        Direction oldDirection = direction;
         if (dist_x > MIN_TOUCH_DISTANCE_DIRECTION && dist_y < MIN_TOUCH_DISTANCE_DIRECTION) {
             if (x > origin.x) {
                 direction = Direction.LEFT_RIGHT;
@@ -114,7 +114,10 @@ public class BgTouchListener implements View.OnTouchListener {
             return true;
         }
 
-        Log.d(LOG_TAG, "Direction " + ((direction != null) ? direction.name() : ""));
+        // Log direction changes only
+        if (direction != oldDirection) {
+            Log.d(LOG_TAG, "direction changed to: " + ((direction != null) ? direction.name() : ""));
+        }
 
         // Fire touch move
         touchListener.onTouchMove(x, y, direction);
@@ -172,10 +175,12 @@ public class BgTouchListener implements View.OnTouchListener {
 
         // Fire event for in/out
         if(inorout.equals(IO.IN)||inorout==IO.BOTH) {
+            Log.d(LOG_TAG, "detected IN");
             inOrOutListener.onIn((int) origin.x, (int) origin.y);
         }
 
         if(inorout.equals(IO.OUT)||inorout==IO.BOTH) {
+            Log.d(LOG_TAG, "detected OUT");
             inOrOutListener.onOut(x, y);
         }
     }

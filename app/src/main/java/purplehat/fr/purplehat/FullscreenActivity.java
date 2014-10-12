@@ -29,7 +29,7 @@ import java.util.TimerTask;
 import purplehat.fr.purplehat.game.Ball;
 import purplehat.fr.purplehat.game.Vector2;
 import purplehat.fr.purplehat.game.World;
-import purplehat.fr.purplehat.network.ConnexionListener;
+import purplehat.fr.purplehat.network.ConnectionListener;
 import purplehat.fr.purplehat.network.DiscoveryService;
 import purplehat.fr.purplehat.utils.AddBallAction;
 import purplehat.fr.purplehat.utils.ScreenUtilitiesService;
@@ -45,6 +45,9 @@ public class FullscreenActivity extends Activity {
 
     private Master master;
     private DrawingView mDrawerView;
+    private Thread connectionListeningThread;
+    private ConnectionListener connectionListener;
+    private static final String LOG_TAG = "FULLSCREEN_ACTIVITY";
 
     public World getWorld() {
         return world;
@@ -119,7 +122,7 @@ public class FullscreenActivity extends Activity {
             public void onTouchDown(int x, int y) {
                 swiping = true;
                 if (master != null || slave != null) {
-                    AddBallAction action = new AddBallAction(0.0,0.0,0.,500.,500.);
+                    AddBallAction action = new AddBallAction(0.0, 0.0, 0., 500., 500.);
                     if (master != null) {
                         master.broadcast(action.getJSON());
                     } else {
@@ -140,8 +143,6 @@ public class FullscreenActivity extends Activity {
                 currentSwipeDirection = direction;
             }
         }));
-
-        new Thread(new ConnexionListener()).start();
     }
 
     @Override
@@ -243,7 +244,9 @@ public class FullscreenActivity extends Activity {
         }, 0, 30);
 
         // start connexion listener
-        new Thread(new ConnexionListener()).start();
+        connectionListener = new ConnectionListener();
+        connectionListeningThread = new Thread(connectionListener);
+        connectionListeningThread.start();
 
         // load bitmap
         /*try {
@@ -256,6 +259,11 @@ public class FullscreenActivity extends Activity {
     @Override
     protected void onStop() {
         super.onStop();
+
+        // Stop listening (brutally)
+        connectionListeningThread.interrupt();
+
+        // Join master/slave
         if (master != null) {
             try {
                 master.stop();
@@ -422,27 +430,27 @@ public class FullscreenActivity extends Activity {
         new Thread(new Runnable() {
             @Override
             public void run() {
+                // figure out the master's address
                 InetAddress masterAddress = null;
                 if (master != null) {
                     try {
                         masterAddress = discoveryService.getLocalIp();
                     } catch (UnknownHostException e) {
-                        e.printStackTrace();
                     }
-                }
-                if (slave != null) {
+                } else if (slave != null) {
                     try {
                         masterAddress = InetAddress.getByAddress(slave.getMasterAddress());
                     } catch (UnknownHostException e) {
-                        e.printStackTrace();
                     }
                 }
+
+                // start discovering
                 try {
                     if (discoveryService != null) {
-                        discoveryService.waitConnexion(masterAddress, swipeX, swipeY);
+                        discoveryService.waitConnection(masterAddress, swipeX, swipeY);
                     }
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    Log.w(LOG_TAG, "discovery (waitConnection) interrupted", e);
                 }
             }
         }).start();
@@ -454,9 +462,9 @@ public class FullscreenActivity extends Activity {
             public void run() {
                 if (slave == null && master == null) {
                     try {
-                        discoveryService.askConnexion(swipeX, swipeY);
+                        discoveryService.askConnection(swipeX, swipeY);
                     } catch (IOException e) {
-                        e.printStackTrace();
+                        Log.w(LOG_TAG, "discovery (askConnection) interrupted", e);
                     }
                 }
             }

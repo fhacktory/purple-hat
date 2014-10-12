@@ -28,7 +28,7 @@ public class Slave {
         public void notify(JSONObject data);
     }
 
-    private static final String LOG_TAG = "MASTER_CLIENT";
+    private static final String LOG_TAG = "SLAVE";
     private WebSocketClient client;
     private Map<String, Collection<Listener>> allListeners;
 
@@ -72,6 +72,7 @@ public class Slave {
         client = new WebSocketClient(uri) {
             @Override
             public void onOpen(ServerHandshake handshakedata) {
+                Log.d(LOG_TAG, "connection opened");
             }
 
             @Override
@@ -79,11 +80,12 @@ public class Slave {
                 try {
                     JSONObject obj = new JSONObject(message);
                     try {
-                        Collection<Listener> listeners = allListeners.get(obj.getString("action"));
+                        String action = obj.getString("action");
+                        Log.d(LOG_TAG, "received action: " + action);
+                        Collection<Listener> listeners = allListeners.get(action);
                         if (listeners != null) {
                             for (Listener listener : listeners) {
                                 listener.notify(obj);
-
                             }
                         }
                     } catch (JSONException e) {
@@ -96,10 +98,12 @@ public class Slave {
 
             @Override
             public void onClose(int code, String reason, boolean remote) {
+                Log.d(LOG_TAG, "connection closed (reason: " + reason + ")");
             }
 
             @Override
             public void onError(Exception ex) {
+                Log.d(LOG_TAG, "connection error", ex);
             }
         };
         client.connect();

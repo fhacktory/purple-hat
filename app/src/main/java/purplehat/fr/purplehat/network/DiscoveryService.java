@@ -3,6 +3,7 @@ package purplehat.fr.purplehat.network;
 import android.content.Context;
 import android.graphics.Point;
 import android.net.wifi.WifiManager;
+import android.util.Log;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -21,6 +22,7 @@ public class DiscoveryService {
     private final static int DISCOVERY_BROADCAST_PORT = 4242;
     private final static int DISCOVERY_HANDSHAKE_PORT = 1337;
     private final static int DISCOVERY_TIMEOUT = 5000;
+    private static final String LOG_TAG = "DISCOVERY_SERVICE";
     private BroadcastService broadcastService;
     private Context context;
 
@@ -29,14 +31,19 @@ public class DiscoveryService {
         broadcastService = new BroadcastService(context, DISCOVERY_BROADCAST_PORT, DISCOVERY_TIMEOUT);
     }
 
-    public void waitConnexion(InetAddress masterAddress, int swipeX, int swipeY) throws IOException {
+    public void waitConnection(InetAddress masterAddress, int swipeX, int swipeY) throws IOException {
         byte[] sender = new byte[6];
         broadcastService.receive(4, sender);
         InetAddress address = InetAddress.getByAddress(new byte[]{sender[0], sender[1], sender[2], sender[3]});
 
         byte[] masterAddrBytes = null;
         if (masterAddress == null) {
-            activateSuperSayanMode(); // TODO devenir un master
+            FullscreenActivity fsa = FullscreenActivity.getInstance();
+            if (fsa != null) {
+                fsa.becomeAMaster();
+            } else {
+                Log.w(LOG_TAG, "FSA is null, couldn't become a master");
+            }
             masterAddrBytes = getLocalIp().getAddress();
         } else {
             masterAddrBytes = masterAddress.getAddress();
@@ -44,11 +51,9 @@ public class DiscoveryService {
 
         Master master = FullscreenActivity.getInstance().getMaster();
         byte[] mac = (master != null) ? master.getScreenId().getBytes() : getMACAddress();
+        Log.d(LOG_TAG, "device id: " + new String(mac));
 
-        try {
-            Thread.sleep(500);
-        } catch (InterruptedException _) {
-        }
+        waitForABit();
 
         short sswipeX = (short) swipeX;
         short sswipeY = (short) swipeY;
@@ -59,10 +64,6 @@ public class DiscoveryService {
         socket.getOutputStream().write(new byte[]{(byte) (sswipeY & 0x00FF), (byte) ((sswipeY & 0xFF00) >> 8)}, 0, 2);
         socket.getOutputStream().write(new byte[]{(byte) 0}, 0, 1); // TODO direction
         socket.close();
-    }
-
-    private void activateSuperSayanMode() {
-        FullscreenActivity.getInstance().becomeAMaster();
     }
 
     public InetAddress getLocalIp() throws UnknownHostException {
@@ -76,19 +77,7 @@ public class DiscoveryService {
         });
     }
 
-    private byte[] getMACAddress() {
-        // HAAAAACK
-        return new byte[] {
-                (byte) (Math.random() * 255),
-                (byte) (Math.random() * 255),
-                (byte) (Math.random() * 255),
-                (byte) (Math.random() * 255),
-                (byte) (Math.random() * 255),
-                (byte) (Math.random() * 255)
-        };
-    }
-
-    public void askConnexion(int swipeX, int swipeY) throws IOException {
+    public void askConnection(int swipeX, int swipeY) throws IOException {
         broadcastService.send(new byte[]{42}, 1);
         ServerSocket serverSocket  = new ServerSocket(DISCOVERY_HANDSHAKE_PORT);
         serverSocket.setSoTimeout(DISCOVERY_TIMEOUT);
@@ -115,13 +104,16 @@ public class DiscoveryService {
         short height = (short) ScreenUtilitiesService.pixel2mm(new Point(0, ScreenUtilitiesService.getDisplayCenter().y * 2)).getY().intValue();
         byte[] mac = getMACAddress();
 
-        FullscreenActivity.getInstance().becomeASlave(masterAddress, new String(mac, "UTF-8"));
-        try {
-            Thread.sleep(500);
-        } catch (InterruptedException _) {
+        // become a slave
+        FullscreenActivity fsa = FullscreenActivity.getInstance();
+        if (fsa != null) {
+            fsa.becomeASlave(masterAddress, new String(mac, "UTF-8"));
+            waitForABit();
+        } else {
+            Log.w(LOG_TAG, "FSA is null, couldn't become a slave");
         }
 
-        socket = new Socket(InetAddress.getByAddress(masterAddress), ConnexionListener.NEW_CONNEXION_PORT);
+        socket = new Socket(InetAddress.getByAddress(masterAddress), ConnectionListener.NEW_CONNEXION_PORT);
         socket.getOutputStream().write(mac, 0, 6);
         socket.getOutputStream().write(externIdentifier, 0, 6);
         socket.getOutputStream().write(new byte[]{(byte) (dx & 0x00FF), (byte) ((dx & 0xFF00) >> 8)}, 0, 2);
@@ -130,5 +122,28 @@ public class DiscoveryService {
         socket.getOutputStream().write(new byte[]{(byte) (height & 0x00FF), (byte) ((height & 0xFF00) >> 8)}, 0, 2);
         socket.getOutputStream().write(new byte[]{(byte) 0}, 0, 1); // TODO direction
         socket.close();
+    }
+
+    private byte[] getMACAddress() {
+        // HAAAAACK
+        return new byte[] {
+                (byte) (Math.random() * 255),
+                (byte) (Math.random() * 255),
+                (byte) (Math.random() * 255),
+                (byte) (Math.random() * 255),
+                (byte) (Math.random() * 255),
+                (byte) (Math.random() * 255)
+        };
+    }
+
+    private void waitForABit() {
+        waitForABit(500);
+    }
+
+    private void waitForABit(int duration) {
+        try {
+            Thread.sleep(duration);
+        } catch (InterruptedException _) {
+        }
     }
 }
